@@ -1,4 +1,4 @@
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,36 +17,49 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const fromPath = useMemo(() => {
+    const value = (location.state as { fromPath?: string } | null)?.fromPath;
+    return typeof value === "string" ? value : undefined;
+  }, [location.state]);
+
   useEffect(() => {
     document.title = "Entrar | Registro de Motoristas";
   }, []);
 
-  // Redirect controlado por effect (não declarativo, evita loop de replaceState)
   useEffect(() => {
     if (!ready || !session) return;
-    const fromPath = (location.state as any)?.from?.pathname as string | undefined;
-    const target = fromPath && fromPath !== "/login" ? fromPath : isAdmin ? "/admin" : "/app";
+
+    const target = fromPath && fromPath !== "/login"
+      ? fromPath
+      : isAdmin
+        ? "/admin"
+        : "/app";
+
     if (location.pathname !== target) {
       navigate(target, { replace: true });
     }
-  }, [ready, session, isAdmin, navigate, location.pathname, location.state]);
+  }, [ready, session, isAdmin, fromPath, location.pathname, navigate]);
 
-  // Enquanto auth carrega ou se já estiver logado e prestes a redirecionar, mostra loading
   if (!ready) return <LoadingScreen />;
   if (session) return <LoadingScreen />;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (submitting) return;
+
     setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
     setSubmitting(false);
+
     if (error) {
       toast.error(error.message === "Invalid login credentials" ? "E-mail ou senha inválidos." : error.message);
       return;
     }
+
     toast.success("Bem-vindo!");
-    // Não navega aqui: o effect acima redireciona quando session/ready estabilizarem
   };
 
   return (
