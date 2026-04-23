@@ -13,10 +13,9 @@ const Index = () => {
 
   useEffect(() => {
     if (!ready) return;
-    if (!session) {
-      navigate("/login", { replace: true });
-    } else {
-      navigate(isAdmin ? "/admin" : "/app", { replace: true });
+    const target = !session ? "/login" : isAdmin ? "/admin" : "/app";
+    if (window.location.pathname !== target) {
+      navigate(target, { replace: true });
     }
   }, [ready, session, isAdmin, navigate]);
 

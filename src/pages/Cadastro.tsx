@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -12,19 +12,24 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 const Cadastro = () => {
   const { ready, session, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { document.title = "Criar conta | Registro de Motoristas"; }, []);
+  useEffect(() => {
+    document.title = "Criar conta | Registro de Motoristas";
+  }, []);
 
   useEffect(() => {
     if (!ready || !session) return;
     const target = isAdmin ? "/admin" : "/app";
-    navigate(target, { replace: true });
-  }, [ready, session, isAdmin, navigate]);
+    if (location.pathname !== target) {
+      navigate(target, { replace: true });
+    }
+  }, [ready, session, isAdmin, location.pathname, navigate]);
 
   if (!ready) return <LoadingScreen />;
   if (session) return <LoadingScreen />;
@@ -51,8 +56,8 @@ const Cadastro = () => {
       toast.error(error.message);
       return;
     }
+
     toast.success("Conta criada!");
-    // Redirect é tratado pelo effect quando a sessão chegar
   };
 
   return (

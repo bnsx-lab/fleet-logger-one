@@ -10,7 +10,7 @@ type AuthState = {
   roles: AppRole[];
   isAdmin: boolean;
   isMotorista: boolean;
-  /** true até a sessão E os papéis terminarem de carregar */
+  /** true somente quando a sessão E os papéis terminaram de carregar */
   ready: boolean;
   signOut: () => Promise<void>;
 };
@@ -20,63 +20,86 @@ const AuthCtx = createContext<AuthState | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
-  const [ready, setReady] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
+  const [rolesReady, setRolesReady] = useState(false);
 
-  // Guarda qual userId teve seus papéis carregados, para não recarregar em cada token refresh
+  // Controle explícito para evitar race entre getSession e INITIAL_SESSION/TOKEN_REFRESHED
   const loadedRolesForUserRef = useRef<string | null>(null);
+  const loadingRolesForUserRef = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
+    const resetRoleState = () => {
+      loadedRolesForUserRef.current = null;
+      loadingRolesForUserRef.current = null;
+      setRoles([]);
+      setRolesReady(true);
+    };
+
     const loadRoles = async (userId: string) => {
-      if (loadedRolesForUserRef.current === userId) return;
-      loadedRolesForUserRef.current = userId;
+      if (
+        loadedRolesForUserRef.current === userId ||
+        loadingRolesForUserRef.current === userId
+      ) {
+        return;
+      }
+
+      loadingRolesForUserRef.current = userId;
+      setRolesReady(false);
+
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId);
+
       if (!mounted) return;
+
+      loadingRolesForUserRef.current = null;
+      loadedRolesForUserRef.current = userId;
+
       if (!error && data) {
         setRoles(data.map((r) => r.role as AppRole));
       } else {
         setRoles([]);
       }
-      setReady(true);
+
+      setRolesReady(true);
     };
 
-    // 1) Listener primeiro
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const handleSession = (sess: Session | null) => {
       if (!mounted) return;
+
       setSession(sess);
+      setAuthResolved(true);
+
       const userId = sess?.user?.id ?? null;
       if (!userId) {
-        loadedRolesForUserRef.current = null;
-        setRoles([]);
-        setReady(true);
+        resetRoleState();
         return;
       }
-      // Carrega papéis apenas se mudou de usuário (evita disparos em token refresh)
-      if (loadedRolesForUserRef.current !== userId) {
-        // Defer para fora do callback para evitar deadlock
-        setTimeout(() => {
-          if (mounted) loadRoles(userId);
-        }, 0);
-      } else {
-        setReady(true);
+
+      if (loadedRolesForUserRef.current === userId) {
+        setRolesReady(true);
+        return;
       }
+
+      if (loadingRolesForUserRef.current === userId) {
+        setRolesReady(false);
+        return;
+      }
+
+      setTimeout(() => {
+        if (mounted) loadRoles(userId);
+      }, 0);
+    };
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      handleSession(sess);
     });
 
-    // 2) Sessão inicial
     supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      const sess = data.session;
-      setSession(sess);
-      const userId = sess?.user?.id ?? null;
-      if (!userId) {
-        setReady(true);
-        return;
-      }
-      loadRoles(userId);
+      handleSession(data.session);
     });
 
     return () => {
@@ -88,13 +111,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     loadedRolesForUserRef.current = null;
+    loadingRolesForUserRef.current = null;
     setRoles([]);
+    setRolesReady(false);
   };
 
-  // Memoiza para manter referência estável quando nada relevante mudou
   const value = useMemo<AuthState>(() => {
     const isAdmin = roles.includes("admin");
     const isMotorista = roles.includes("motorista");
+    const ready = authResolved && (!session || rolesReady);
+
     return {
       session,
       user: session?.user ?? null,
@@ -104,7 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ready,
       signOut,
     };
-  }, [session, roles, ready]);
+  }, [session, roles, authResolved, rolesReady]);
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 };

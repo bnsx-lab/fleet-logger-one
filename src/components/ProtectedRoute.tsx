@@ -8,10 +8,6 @@ type Props = {
   requireAdmin?: boolean;
 };
 
-/**
- * Guard único de proteção. Toda decisão de redirect acontece DENTRO de um useEffect,
- * comparando o pathname atual com o destino para nunca chamar navigate em loop.
- */
 export const ProtectedRoute = ({ children, requireAdmin = false }: Props) => {
   const { session, ready, isAdmin, isMotorista } = useAuth();
   const navigate = useNavigate();
@@ -22,31 +18,31 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: Props) => {
 
     const here = location.pathname;
 
-    // 1) Não autenticado
     if (!session) {
       if (here !== "/login") {
-        navigate("/login", { replace: true, state: { from: location } });
+        navigate("/login", { replace: true, state: { fromPath: here } });
       }
       return;
     }
 
-    // 2) Autenticado mas sem nenhum papel atribuído
     if (!isAdmin && !isMotorista) {
-      if (here !== "/login") navigate("/login", { replace: true });
+      if (here !== "/login") {
+        navigate("/login", { replace: true });
+      }
       return;
     }
 
-    // 3) Motorista tentando entrar em rota admin
     if (requireAdmin && !isAdmin) {
-      if (!here.startsWith("/app")) navigate("/app", { replace: true });
-      return;
+      if (!here.startsWith("/app")) {
+        navigate("/app", { replace: true });
+      }
     }
   }, [ready, session, isAdmin, isMotorista, requireAdmin, location.pathname, navigate]);
 
   if (!ready) return <LoadingScreen />;
   if (!session) return <LoadingScreen />;
-  if (requireAdmin && !isAdmin) return <LoadingScreen />;
   if (!isAdmin && !isMotorista) return <LoadingScreen />;
+  if (requireAdmin && !isAdmin) return <LoadingScreen />;
 
   return <>{children}</>;
 };
