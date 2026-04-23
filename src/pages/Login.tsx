@@ -55,7 +55,8 @@ const Login = () => {
     setSubmitting(false);
 
     if (error) {
-      toast.error(error.message === "Invalid login credentials" ? "E-mail ou senha inválidos." : error.message);
+      const message = mapAuthError(error.message);
+      toast.error(message);
       return;
     }
 
@@ -85,18 +86,25 @@ const Login = () => {
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? "Entrando..." : "Entrar"}
           </Button>
-          <div className="flex items-center justify-between text-sm">
-            <Link to="/cadastro" className="text-primary hover:text-primary-hover">Criar conta</Link>
+          <div className="text-center text-sm">
             <Link to="/recuperar-senha" className="text-primary hover:text-primary-hover">Esqueci minha senha</Link>
           </div>
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Motoristas podem se cadastrar. O acesso de administrador é controlado pelo sistema.
+          O acesso é criado pelo administrador. Se você ainda não recebeu suas credenciais, fale com a administração.
         </p>
       </div>
     </div>
   );
+};
+
+const mapAuthError = (message: string) => {
+  if (message === "Invalid login credentials") return "E-mail ou senha inválidos.";
+  if (/Password/i.test(message) && /weak|short|length|characters/i.test(message)) {
+    return "Senha fraca. Use pelo menos 8 caracteres, com letras maiúsculas, minúsculas, números e símbolo.";
+  }
+  return "Não foi possível entrar. Verifique seus dados e tente novamente.";
 };
 
 export default Login;

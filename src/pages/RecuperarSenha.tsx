@@ -31,7 +31,7 @@ const RecuperarSenha = () => {
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold">Recuperar senha</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Enviaremos um link de redefinição.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Informe o e-mail cadastrado pelo administrador para receber o link de redefinição.</p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
           {sent ? (
