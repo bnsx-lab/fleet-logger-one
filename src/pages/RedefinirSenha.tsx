@@ -16,13 +16,15 @@ const RedefinirSenha = () => {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const weakPasswordMessage = validateStrongPassword(password);
-    if (weakPasswordMessage) return toast.error(weakPasswordMessage);
+    if (password.length < 6) return toast.error("A senha precisa ter pelo menos 6 caracteres.");
     if (password !== confirm) return toast.error("As senhas não coincidem.");
     setSubmitting(true);
     const { error } = await supabase.auth.updateUser({ password });
     setSubmitting(false);
-    if (error) return toast.error(mapPasswordError(error.message));
+    if (error) {
+      toast.error("Não foi possível atualizar a senha. Tente novamente.");
+      return;
+    }
     toast.success("Senha atualizada.");
     navigate("/login");
   };
@@ -31,9 +33,7 @@ const RedefinirSenha = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
         <h1 className="text-xl font-bold">Definir nova senha</h1>
-        <p className="text-sm text-muted-foreground">
-          Use pelo menos 8 caracteres com letras maiúsculas, minúsculas, números e símbolo.
-        </p>
+        <p className="text-sm text-muted-foreground">Mínimo de 6 caracteres.</p>
         <div className="space-y-2">
           <Label htmlFor="p1">Nova senha</Label>
           <Input id="p1" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
@@ -48,22 +48,6 @@ const RedefinirSenha = () => {
       </form>
     </div>
   );
-};
-
-const validateStrongPassword = (password: string) => {
-  if (password.length < 8) return "Senha fraca. Use pelo menos 8 caracteres.";
-  if (!/[A-Z]/.test(password)) return "Senha fraca. Inclua pelo menos uma letra maiúscula.";
-  if (!/[a-z]/.test(password)) return "Senha fraca. Inclua pelo menos uma letra minúscula.";
-  if (!/[0-9]/.test(password)) return "Senha fraca. Inclua pelo menos um número.";
-  if (!/[^A-Za-z0-9]/.test(password)) return "Senha fraca. Inclua pelo menos um símbolo.";
-  return null;
-};
-
-const mapPasswordError = (message: string) => {
-  if (/Password/i.test(message) && /weak|short|length|characters/i.test(message)) {
-    return "Senha fraca. Use pelo menos 8 caracteres, com letras maiúsculas, minúsculas, números e símbolo.";
-  }
-  return "Não foi possível atualizar a senha. Tente novamente.";
 };
 
 export default RedefinirSenha;

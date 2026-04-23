@@ -86,13 +86,14 @@ const Login = () => {
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? "Entrando..." : "Entrar"}
           </Button>
-          <div className="text-center text-sm">
+          <div className="flex items-center justify-between text-sm">
+            <Link to="/cadastro" className="text-primary hover:text-primary-hover">Criar conta</Link>
             <Link to="/recuperar-senha" className="text-primary hover:text-primary-hover">Esqueci minha senha</Link>
           </div>
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          O acesso é criado pelo administrador. Se você ainda não recebeu suas credenciais, fale com a administração.
+          Novos motoristas podem se cadastrar. O acesso de administrador é controlado separadamente.
         </p>
       </div>
     </div>
