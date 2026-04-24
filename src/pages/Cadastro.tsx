@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Logo } from "@/components/Logo";
+import { UserPlus } from "lucide-react";
 
 const Cadastro = () => {
   const { ready, session, isAdmin } = useAuth();
@@ -20,7 +21,7 @@ const Cadastro = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    document.title = "Criar conta | Registro de Motoristas";
+    document.title = "Criar conta | Controle de BDT";
   }, []);
 
   useEffect(() => {
@@ -58,46 +59,106 @@ const Cadastro = () => {
     }
 
     toast.success("Conta criada!");
-    // Redirect tratado pelo useEffect quando a sessão chegar
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <Logo className="mb-3 h-16 w-16" />
-          <h1 className="text-2xl font-bold">Criar conta</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Cadastro de motorista ASERP</p>
+        {/* Header */}
+        <div className="mb-10 flex flex-col items-center text-center">
+          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-card shadow-sm ring-1 ring-border">
+            <Logo className="h-14 w-14" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Criar conta
+          </h1>
+          <p className="mt-1 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            Cadastro de motorista
+          </p>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
-          <div className="space-y-2">
-            <Label htmlFor="nome">Nome completo</Label>
-            <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required maxLength={120} />
+        {/* Formulario */}
+        <form onSubmit={onSubmit} className="space-y-5 rounded-2xl border border-border bg-card p-8 shadow-sm">
+          <div className="space-y-1.5">
+            <Label htmlFor="nome" className="text-sm font-medium text-foreground">
+              Nome completo
+            </Label>
+            <Input
+              id="nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              required
+              maxLength={120}
+              placeholder="Seu nome"
+              className="h-11"
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-sm font-medium text-foreground">
+              E-mail
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seu@email.com"
+              className="h-11"
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-            <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres.</p>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-sm font-medium text-foreground">
+              Senha
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Minimo 6 caracteres"
+              className="h-11"
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm">Confirmar senha</Label>
-            <Input id="confirm" type="password" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+          <div className="space-y-1.5">
+            <Label htmlFor="confirm" className="text-sm font-medium text-foreground">
+              Confirmar senha
+            </Label>
+            <Input
+              id="confirm"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Repita a senha"
+              className="h-11"
+            />
           </div>
-          <Button type="submit" className="w-full" disabled={submitting}>
+          <Button
+            type="submit"
+            className="h-11 w-full gap-2 text-base font-semibold"
+            disabled={submitting}
+          >
             {submitting ? "Criando..." : "Criar conta"}
+            {!submitting && <UserPlus className="h-4 w-4" />}
           </Button>
-          <div className="text-center text-sm">
-            <Link to="/login" className="text-primary hover:text-primary-hover">Já tenho conta</Link>
+          
+          <div className="border-t border-border pt-4 text-center text-sm">
+            <Link
+              to="/login"
+              className="font-medium text-primary transition-colors hover:text-primary/80"
+            >
+              Ja tenho uma conta
+            </Link>
           </div>
         </form>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Sua conta começa como motorista. Após o cadastro, o administrador poderá vincular sua empresa, posto e veículo.
+        <p className="mt-8 text-center text-xs leading-relaxed text-muted-foreground">
+          Sua conta comeca como motorista. Apos o cadastro, o administrador vinculara sua empresa e posto.
         </p>
       </div>
     </div>

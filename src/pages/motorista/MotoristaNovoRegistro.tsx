@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin, Car, Calendar, Clock, Gauge, FileText, Check, AlertCircle } from "lucide-react";
 import {
   EMPRESA_PADRAO_ID,
   ensureVeiculoByPlaca,
@@ -43,7 +43,7 @@ const MotoristaNovoRegistro = () => {
   const [observacao, setObservacao] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { document.title = "Novo registro"; }, []);
+  useEffect(() => { document.title = "Novo registro | Controle de BDT"; }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -76,13 +76,13 @@ const MotoristaNovoRegistro = () => {
     if (submitting || !user || !motorista) return;
 
     if (!postoId) return toast.error("Selecione o posto.");
-    if (normalizePlaca(placa).length < 5) return toast.error("Informe uma placa válida.");
-    if (!dataRef) return toast.error("Informe a data de referência.");
-    if (!horaEntrada || !horaSaida) return toast.error("Informe entrada e saída.");
+    if (normalizePlaca(placa).length < 5) return toast.error("Informe uma placa valida.");
+    if (!dataRef) return toast.error("Informe a data de referencia.");
+    if (!horaEntrada || !horaSaida) return toast.error("Informe entrada e saida.");
     const a = Number(kmSaida), b = Number(kmVolta);
-    if (!Number.isFinite(a) || a < 0) return toast.error("KM de saída inválido.");
-    if (!Number.isFinite(b) || b < 0) return toast.error("KM de volta inválido.");
-    if (b < a) return toast.error("KM de volta não pode ser menor que KM de saída.");
+    if (!Number.isFinite(a) || a < 0) return toast.error("Odometro de saida invalido.");
+    if (!Number.isFinite(b) || b < 0) return toast.error("Odometro de volta invalido.");
+    if (b < a) return toast.error("O odometro de volta nao pode ser menor que o de saida.");
 
     setSubmitting(true);
     try {
@@ -107,18 +107,18 @@ const MotoristaNovoRegistro = () => {
 
       if (error) {
         if (/registros_unico_motorista_data_veiculo|duplicate key/i.test(error.message)) {
-          toast.error("Já existe um registro seu para essa placa nesta data.");
+          toast.error("Ja existe um registro seu para essa placa nesta data.");
         } else if (/KM da volta/i.test(error.message)) {
-          toast.error("KM da volta não pode ser menor que KM de saída.");
+          toast.error("Odometro de volta nao pode ser menor que o de saida.");
         } else if (/Hor[aá]rio de sa[ií]da/i.test(error.message)) {
-          toast.error("Horário inválido. Verifique entrada e saída.");
+          toast.error("Horario invalido. Verifique entrada e saida.");
         } else {
-          toast.error("Não foi possível salvar. Tente novamente.");
+          toast.error("Nao foi possivel salvar. Tente novamente.");
         }
         setSubmitting(false);
         return;
       }
-      toast.success("Registro salvo!");
+      toast.success("Registro salvo com sucesso!");
       navigate("/app/sucesso", { replace: true });
     } catch (err: any) {
       toast.error(err?.message ?? "Erro ao salvar.");
@@ -126,89 +126,213 @@ const MotoristaNovoRegistro = () => {
     }
   };
 
-  if (loadingCtx) return <p className="text-sm text-muted-foreground">Carregando...</p>;
+  if (loadingCtx) {
+    return (
+      <div className="flex min-h-[200px] items-center justify-center">
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
 
   if (!motorista) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card p-6 text-sm">
-        Sua conta de motorista ainda não está pronta. Atualize a página em alguns segundos. Se persistir, entre em contato com o administrador.
+      <div className="mx-auto max-w-md rounded-2xl border border-dashed border-border bg-card p-8 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50">
+          <AlertCircle className="h-6 w-6 text-amber-600" />
+        </div>
+        <h3 className="text-lg font-semibold">Conta em configuracao</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Sua conta de motorista ainda esta sendo configurada. Atualize a pagina em alguns segundos ou entre em contato com o administrador.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4" />
+    <div className="mx-auto max-w-2xl space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="h-10 w-10 rounded-xl"
+        >
+          <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Novo registro</h1>
-          <p className="text-sm text-muted-foreground">Preencha os dados da sua jornada.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Novo registro</h1>
+          <p className="text-sm text-muted-foreground">Preencha os dados da sua jornada</p>
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-border bg-card p-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label>Posto</Label>
-            <select
-              value={postoId}
-              onChange={(e) => setPostoId(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Selecione...</option>
-              {postos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
-            </select>
+      {/* Formulario */}
+      <form onSubmit={onSubmit} className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+        
+        {/* Secao: Local e Veiculo */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            Local e veiculo
           </div>
-          <div className="space-y-1">
-            <Label>Placa do veículo</Label>
-            <Input
-              value={placa}
-              onChange={(e) => setPlaca(e.target.value.toUpperCase())}
-              placeholder="ABC1D23"
-              maxLength={8}
-              autoCapitalize="characters"
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Posto de trabalho</Label>
+              <select
+                value={postoId}
+                onChange={(e) => setPostoId(e.target.value)}
+                className="flex h-11 w-full rounded-xl border border-input bg-background px-4 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Selecione o posto...</option>
+                {postos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Placa do veiculo</Label>
+              <div className="relative">
+                <Car className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={placa}
+                  onChange={(e) => setPlaca(e.target.value.toUpperCase())}
+                  placeholder="ABC1D23"
+                  maxLength={8}
+                  autoCapitalize="characters"
+                  className="h-11 rounded-xl pl-10"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Secao: Data e Horarios */}
+        <div className="space-y-4 border-t border-border pt-6">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            Data e horarios
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Data de referencia</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="date"
+                  value={dataRef}
+                  onChange={(e) => setDataRef(e.target.value)}
+                  className="h-11 rounded-xl pl-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Horario de entrada</Label>
+              <Input
+                type="time"
+                value={horaEntrada}
+                onChange={(e) => setHoraEntrada(e.target.value)}
+                className="h-11 rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Horario de saida</Label>
+              <Input
+                type="time"
+                value={horaSaida}
+                onChange={(e) => setHoraSaida(e.target.value)}
+                className="h-11 rounded-xl"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Saida no dia seguinte e reconhecida automaticamente
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Secao: Odometro */}
+        <div className="space-y-4 border-t border-border pt-6">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <Gauge className="h-4 w-4" />
+            Quilometragem
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Odometro na saida</Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={kmSaida}
+                onChange={(e) => setKmSaida(e.target.value)}
+                placeholder="Ex: 45230"
+                className="h-11 rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Odometro na volta</Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={kmVolta}
+                onChange={(e) => setKmVolta(e.target.value)}
+                placeholder="Ex: 45380"
+                className="h-11 rounded-xl"
+              />
+            </div>
+          </div>
+
+          {/* Resultado KM Rodados */}
+          {kmRodados !== null && (
+            <div
+              className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+                kmRodados < 0
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {kmRodados >= 0 ? (
+                  <Check className="h-5 w-5" />
+                ) : (
+                  <AlertCircle className="h-5 w-5" />
+                )}
+                <span className="text-sm font-medium">
+                  {kmRodados >= 0 ? "Distancia percorrida" : "Valor invalido"}
+                </span>
+              </div>
+              <span className="text-lg font-bold">
+                {kmRodados >= 0 ? `${kmRodados} km` : "Verifique os valores"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Secao: Observacao */}
+        <div className="space-y-4 border-t border-border pt-6">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <FileText className="h-4 w-4" />
+            Observacao
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Anotacoes adicionais (opcional)</Label>
+            <Textarea
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Descreva qualquer ocorrencia ou informacao relevante..."
+              className="min-h-[100px] resize-none rounded-xl"
             />
           </div>
-          <div className="space-y-1">
-            <Label>Data de referência</Label>
-            <Input type="date" value={dataRef} onChange={(e) => setDataRef(e.target.value)} />
-          </div>
-          <div />
-          <div className="space-y-1">
-            <Label>Hora de entrada</Label>
-            <Input type="time" value={horaEntrada} onChange={(e) => setHoraEntrada(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>Hora de saída</Label>
-            <Input type="time" value={horaSaida} onChange={(e) => setHoraSaida(e.target.value)} />
-            <p className="text-xs text-muted-foreground">Se a saída for no dia seguinte, o sistema reconhece automaticamente.</p>
-          </div>
-          <div className="space-y-1">
-            <Label>KM saída</Label>
-            <Input type="number" inputMode="numeric" min={0} value={kmSaida} onChange={(e) => setKmSaida(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>KM volta</Label>
-            <Input type="number" inputMode="numeric" min={0} value={kmVolta} onChange={(e) => setKmVolta(e.target.value)} />
-          </div>
         </div>
 
-        {kmRodados !== null && (
-          <div className={`rounded-md border px-3 py-2 text-sm ${kmRodados < 0 ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/30 bg-accent text-accent-foreground"}`}>
-            KM rodados: <b>{kmRodados}</b>
-            {kmRodados < 0 && " — KM volta não pode ser menor que KM saída."}
-          </div>
-        )}
-
-        <div className="space-y-1">
-          <Label>Observação (opcional)</Label>
-          <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={3} maxLength={500} />
-        </div>
-
-        <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+        {/* Botao de Submit */}
+        <Button
+          type="submit"
+          className="h-12 w-full gap-2 text-base font-semibold shadow-md"
+          disabled={submitting || (kmRodados !== null && kmRodados < 0)}
+        >
           {submitting ? "Salvando..." : "Salvar registro"}
+          {!submitting && <Check className="h-5 w-5" />}
         </Button>
       </form>
     </div>

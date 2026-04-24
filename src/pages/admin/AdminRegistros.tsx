@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { StatusBadge, RegistroStatus } from "@/components/StatusBadge";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { buildCsv, downloadCsv } from "@/lib/csv";
 import { exportPdf } from "@/lib/pdf";
-import { Download, Filter, FileText } from "lucide-react";
+import { Download, Filter, FileText, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
 
 type Row = {
@@ -52,7 +52,7 @@ const AdminRegistros = () => {
   const [postos, setPostos] = useState<OptList>([]);
   const [veiculos, setVeiculos] = useState<OptList>([]);
 
-  useEffect(() => { document.title = "Registros | Admin"; }, []);
+  useEffect(() => { document.title = "Registros | Controle de BDT"; }, []);
 
   useEffect(() => {
     (async () => {
@@ -160,28 +160,41 @@ const AdminRegistros = () => {
     setPage(0);
   };
 
+  const hasFilters = motoristaId || empresaId || postoId || veiculoId || status || from || to;
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Registros</h1>
-          <p className="text-sm text-muted-foreground">{formatNumber(count)} registro(s)</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Registros</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{formatNumber(count)} registro(s) encontrado(s)</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={onExportCsv} variant="outline">
-            <Download className="mr-2 h-4 w-4" /> Exportar CSV
+          <Button onClick={onExportCsv} variant="outline" className="gap-2">
+            <Download className="h-4 w-4" /> CSV
           </Button>
-          <Button onClick={onExportPdf} variant="outline">
-            <FileText className="mr-2 h-4 w-4" /> Exportar PDF
+          <Button onClick={onExportPdf} variant="outline" className="gap-2">
+            <FileText className="h-4 w-4" /> PDF
           </Button>
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-4">
-        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Filter className="h-4 w-4" /> Filtros
+      {/* Filtros */}
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <Filter className="h-4 w-4" />
+            Filtros
+          </div>
+          {hasFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1.5 text-muted-foreground">
+              <X className="h-4 w-4" />
+              Limpar
+            </Button>
+          )}
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Select label="Motorista" value={motoristaId} onChange={setMotoristaId} options={motoristas} />
           <Select label="Empresa" value={empresaId} onChange={setEmpresaId} options={empresas} />
           <Select label="Posto" value={postoId} onChange={setPostoId} options={postos} />
@@ -198,63 +211,75 @@ const AdminRegistros = () => {
               { id: "cancelado", label: "Cancelado" },
             ]}
           />
-          <div>
-            <Label className="text-xs">De</Label>
-            <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0); }} />
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">De</Label>
+            <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0); }} className="h-10 rounded-xl" />
           </div>
-          <div>
-            <Label className="text-xs">Até</Label>
-            <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0); }} />
-          </div>
-          <div className="flex items-end">
-            <Button variant="ghost" onClick={clearFilters} className="w-full">Limpar filtros</Button>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Ate</Label>
+            <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0); }} className="h-10 rounded-xl" />
           </div>
         </div>
       </div>
 
+      {/* Tabela */}
       {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <div className="rounded-2xl border border-border bg-card p-8">
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
       ) : rows.length === 0 ? (
         <EmptyState title="Nenhum registro encontrado" description="Ajuste os filtros ou aguarde novos registros." />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-border bg-card">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-2">Data</th>
-                  <th className="px-4 py-2">Motorista</th>
-                  <th className="px-4 py-2">Empresa</th>
-                  <th className="px-4 py-2">Posto</th>
-                  <th className="px-4 py-2">Placa</th>
-                  <th className="px-4 py-2">Km</th>
-                  <th className="px-4 py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-border hover:bg-muted/30">
-                    <td className="px-4 py-2 whitespace-nowrap">{formatDate(r.data_referencia)}</td>
-                    <td className="px-4 py-2">
-                      <Link to={`/admin/registros/${r.id}`} className="font-medium text-primary hover:underline">
-                        {r.motoristas?.nome_exibicao ?? "—"}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-2">{r.empresas?.nome ?? "—"}</td>
-                    <td className="px-4 py-2">{r.postos?.nome ?? "—"}</td>
-                    <td className="px-4 py-2">{r.veiculos?.placa ?? "—"}</td>
-                    <td className="px-4 py-2">{formatNumber(r.km_rodados)}</td>
-                    <td className="px-4 py-2"><StatusBadge status={r.status} /></td>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-border bg-muted/60">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Motorista</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Empresa</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Posto</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Placa</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Km rodados</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {rows.map((r) => (
+                    <tr key={r.id} className="transition-colors hover:bg-muted/40">
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-foreground">{formatDate(r.data_referencia)}</td>
+                      <td className="px-4 py-3">
+                        <Link to={`/admin/registros/${r.id}`} className="font-medium text-primary transition-colors hover:text-primary/80 hover:underline">
+                          {r.motoristas?.nome_exibicao ?? "-"}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{r.empresas?.nome ?? "-"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{r.postos?.nome ?? "-"}</td>
+                      <td className="px-4 py-3 font-mono text-foreground">{r.veiculos?.placa ?? "-"}</td>
+                      <td className="px-4 py-3 text-right tabular-nums font-semibold text-foreground">{formatNumber(r.km_rodados)}</td>
+                      <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Página {page + 1} de {totalPages}</span>
+          
+          {/* Paginacao */}
+          <div className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3">
+            <span className="text-sm text-muted-foreground">
+              Pagina <span className="font-semibold text-foreground">{page + 1}</span> de <span className="font-semibold text-foreground">{totalPages}</span>
+            </span>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
-              <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Próxima</Button>
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="gap-1">
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+              <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)} className="gap-1">
+                Proxima
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </>
@@ -264,12 +289,12 @@ const AdminRegistros = () => {
 };
 
 const Select = ({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: OptList }) => (
-  <div>
-    <Label className="text-xs">{label}</Label>
+  <div className="space-y-1.5">
+    <Label className="text-xs font-medium">{label}</Label>
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
     >
       <option value="">Todos</option>
       {options.map((o) => (
