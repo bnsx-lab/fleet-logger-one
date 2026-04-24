@@ -2,9 +2,10 @@ import { ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut, Truck, Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/Logo";
 
 type NavItem = { to: string; label: string };
 
@@ -31,10 +32,11 @@ export const AppShell = ({ children, nav, title }: { children: ReactNode; nav: N
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <Truck className="h-4 w-4" />
+              <Logo className="h-8 w-8" />
+              <div className="leading-tight">
+                <span className="block text-sm font-bold">ASERP</span>
+                <span className="block text-[11px] text-muted-foreground">{title}</span>
               </div>
-              <span className="text-sm font-bold">{title}</span>
             </Link>
           </div>
           <nav className="hidden items-center gap-1 md:flex">

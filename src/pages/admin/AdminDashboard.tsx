@@ -25,29 +25,36 @@ const AdminDashboard = () => {
 
   useEffect(() => { document.title = "Dashboard | Admin"; }, []);
 
+  const load = async () => {
+    const today = todayISO();
+    const [hoje, pend, aprov, corr, rec] = await Promise.all([
+      supabase.from("registros").select("id", { count: "exact", head: true }).eq("data_referencia", today),
+      supabase.from("registros").select("id", { count: "exact", head: true }).eq("status", "pendente"),
+      supabase.from("registros").select("id", { count: "exact", head: true }).eq("status", "aprovado"),
+      supabase.from("registros").select("id", { count: "exact", head: true }).eq("status", "corrigido"),
+      supabase
+        .from("registros")
+        .select("id, data_referencia, km_rodados, status, motoristas(nome_exibicao), postos(nome), empresas(nome)")
+        .order("created_at", { ascending: false })
+        .limit(8),
+    ]);
+    setStats({
+      hoje: hoje.count ?? 0,
+      pendentes: pend.count ?? 0,
+      aprovados: aprov.count ?? 0,
+      corrigidos: corr.count ?? 0,
+    });
+    setRecent((rec.data as any) ?? []);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      const today = todayISO();
-      const [hoje, pend, aprov, corr, rec] = await Promise.all([
-        supabase.from("registros").select("id", { count: "exact", head: true }).eq("data_referencia", today),
-        supabase.from("registros").select("id", { count: "exact", head: true }).eq("status", "pendente"),
-        supabase.from("registros").select("id", { count: "exact", head: true }).eq("status", "aprovado"),
-        supabase.from("registros").select("id", { count: "exact", head: true }).eq("status", "corrigido"),
-        supabase
-          .from("registros")
-          .select("id, data_referencia, km_rodados, status, motoristas(nome_exibicao), postos(nome), empresas(nome)")
-          .order("created_at", { ascending: false })
-          .limit(8),
-      ]);
-      setStats({
-        hoje: hoje.count ?? 0,
-        pendentes: pend.count ?? 0,
-        aprovados: aprov.count ?? 0,
-        corrigidos: corr.count ?? 0,
-      });
-      setRecent((rec.data as any) ?? []);
-      setLoading(false);
-    })();
+    load();
+    const channel = supabase
+      .channel("admin-dashboard-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "registros" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const cards = [
