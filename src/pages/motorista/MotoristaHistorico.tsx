@@ -5,12 +5,17 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge, RegistroStatus } from "@/components/StatusBadge";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 type Row = {
   id: string;
   data_referencia: string;
   entrada_at: string;
   saida_at: string;
+  km_saida: number;
+  km_volta: number;
   km_rodados: number;
   status: RegistroStatus;
   postos: { nome: string } | null;
@@ -22,7 +27,7 @@ const MotoristaHistorico = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { document.title = "Histórico"; }, []);
+  useEffect(() => { document.title = "Meu histórico"; }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -30,45 +35,89 @@ const MotoristaHistorico = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("registros")
-        .select("id, data_referencia, entrada_at, saida_at, km_rodados, status, postos(nome), veiculos(placa)")
+        .select("id, data_referencia, entrada_at, saida_at, km_saida, km_volta, km_rodados, status, postos(nome), veiculos(placa)")
+        .eq("profile_id", user.id)
         .order("data_referencia", { ascending: false })
-        .limit(100);
+        .order("created_at", { ascending: false })
+        .limit(200);
       if (error) toast.error("Erro ao carregar histórico.");
       setRows((data as any) ?? []);
       setLoading(false);
     })();
   }, [user]);
 
-  if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
-  if (!rows.length) return <EmptyState title="Sem registros ainda" description="Seus registros aparecerão aqui." />;
-
   return (
-    <div className="space-y-3">
-      <h1 className="text-2xl font-bold">Meu histórico</h1>
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="px-4 py-2">Data</th>
-              <th className="px-4 py-2">Posto</th>
-              <th className="px-4 py-2">Placa</th>
-              <th className="px-4 py-2">Km</th>
-              <th className="px-4 py-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t border-border">
-                <td className="px-4 py-2">{formatDate(r.data_referencia)}</td>
-                <td className="px-4 py-2">{r.postos?.nome ?? "—"}</td>
-                <td className="px-4 py-2">{r.veiculos?.placa ?? "—"}</td>
-                <td className="px-4 py-2">{formatNumber(r.km_rodados)}</td>
-                <td className="px-4 py-2"><StatusBadge status={r.status} /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Meu histórico</h1>
+          <p className="text-sm text-muted-foreground">{loading ? "Carregando..." : `${rows.length} registro(s)`}</p>
+        </div>
+        <Button asChild><Link to="/app/novo"><Plus className="mr-1 h-4 w-4" /> Novo</Link></Button>
       </div>
+
+      {!loading && rows.length === 0 ? (
+        <EmptyState
+          title="Sem registros ainda"
+          description="Quando você salvar seu primeiro registro, ele aparecerá aqui."
+          action={<Button asChild><Link to="/app/novo"><Plus className="mr-1 h-4 w-4" /> Criar primeiro registro</Link></Button>}
+        />
+      ) : (
+        <>
+          {/* Mobile cards */}
+          <div className="space-y-2 md:hidden">
+            {rows.map((r) => (
+              <div key={r.id} className="rounded-xl border border-border bg-card p-3">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-sm font-semibold">{formatDate(r.data_referencia)}</span>
+                  <StatusBadge status={r.status} />
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-xs">
+                  <div><span className="text-muted-foreground">Posto:</span> {r.postos?.nome ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Placa:</span> {r.veiculos?.placa ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Entrada:</span> {formatDateTime(r.entrada_at)}</div>
+                  <div><span className="text-muted-foreground">Saída:</span> {formatDateTime(r.saida_at)}</div>
+                  <div className="col-span-2"><span className="text-muted-foreground">Km:</span> {formatNumber(r.km_saida)} → {formatNumber(r.km_volta)} = <b>{formatNumber(r.km_rodados)}</b></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-2">Data</th>
+                  <th className="px-4 py-2">Posto</th>
+                  <th className="px-4 py-2">Placa</th>
+                  <th className="px-4 py-2">Entrada</th>
+                  <th className="px-4 py-2">Saída</th>
+                  <th className="px-4 py-2">Km saída</th>
+                  <th className="px-4 py-2">Km volta</th>
+                  <th className="px-4 py-2">Km rodados</th>
+                  <th className="px-4 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t border-border">
+                    <td className="px-4 py-2 whitespace-nowrap">{formatDate(r.data_referencia)}</td>
+                    <td className="px-4 py-2">{r.postos?.nome ?? "—"}</td>
+                    <td className="px-4 py-2">{r.veiculos?.placa ?? "—"}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">{formatDateTime(r.entrada_at)}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">{formatDateTime(r.saida_at)}</td>
+                    <td className="px-4 py-2">{formatNumber(r.km_saida)}</td>
+                    <td className="px-4 py-2">{formatNumber(r.km_volta)}</td>
+                    <td className="px-4 py-2 font-medium">{formatNumber(r.km_rodados)}</td>
+                    <td className="px-4 py-2"><StatusBadge status={r.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 };
