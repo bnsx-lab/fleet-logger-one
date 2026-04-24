@@ -21,6 +21,7 @@ import AdminMotoristas from "./pages/admin/AdminMotoristas";
 import AdminPostos from "./pages/admin/AdminPostos";
 import AdminVeiculos from "./pages/admin/AdminVeiculos";
 import AdminEmpresas from "./pages/admin/AdminEmpresas";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
 
 import MotoristaLayout from "./pages/motorista/MotoristaLayout";
 import MotoristaHome from "./pages/motorista/MotoristaHome";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="postos" element={<AdminPostos />} />
               <Route path="veiculos" element={<AdminVeiculos />} />
               <Route path="empresas" element={<AdminEmpresas />} />
+              <Route path="usuarios" element={<AdminUsuarios />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

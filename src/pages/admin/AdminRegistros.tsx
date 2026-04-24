@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge, RegistroStatus } from "@/components/StatusBadge";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { buildCsv, downloadCsv } from "@/lib/csv";
-import { Download, Filter } from "lucide-react";
+import { exportPdf } from "@/lib/pdf";
+import { Download, Filter, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 type Row = {
@@ -88,37 +89,70 @@ const AdminRegistros = () => {
     return q;
   };
 
+  const reload = async () => {
+    setLoading(true);
+    const q = buildQuery().range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+    const { data, count, error } = await q;
+    if (error) toast.error("Erro ao carregar registros.");
+    setRows((data as any) ?? []);
+    setCount(count ?? 0);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const q = buildQuery().range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
-      const { data, count, error } = await q;
-      if (error) toast.error("Erro ao carregar registros.");
-      setRows((data as any) ?? []);
-      setCount(count ?? 0);
-      setLoading(false);
-    })();
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, motoristaId, empresaId, postoId, veiculoId, status, from, to]);
+
+  // Realtime: novos registros do motorista chegam automaticamente
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-registros-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "registros" }, () => {
+        reload();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, motoristaId, empresaId, postoId, veiculoId, status, from, to]);
 
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
-  const onExport = async () => {
+  const fetchAllForExport = async () => {
     const { data, error } = await buildQuery().limit(5000);
-    if (error) return toast.error("Erro ao exportar.");
-    const csv = buildCsv(data as any[], [
-      { header: "Data", accessor: (r: any) => r.data_referencia },
-      { header: "Entrada", accessor: (r: any) => formatDateTime(r.entrada_at) },
-      { header: "Saída", accessor: (r: any) => formatDateTime(r.saida_at) },
-      { header: "Motorista", accessor: (r: any) => r.motoristas?.nome_exibicao ?? "" },
-      { header: "Empresa", accessor: (r: any) => r.empresas?.nome ?? "" },
-      { header: "Posto", accessor: (r: any) => r.postos?.nome ?? "" },
-      { header: "Placa", accessor: (r: any) => r.veiculos?.placa ?? "" },
-      { header: "Km saída", accessor: (r: any) => r.km_saida },
-      { header: "Km volta", accessor: (r: any) => r.km_volta },
-      { header: "Km rodados", accessor: (r: any) => r.km_rodados },
-      { header: "Status", accessor: (r: any) => r.status },
-    ]);
+    if (error) { toast.error("Erro ao exportar."); return null; }
+    return (data as any[]) ?? [];
+  };
+
+  const exportColumns = [
+    { header: "Data", accessor: (r: any) => formatDate(r.data_referencia) },
+    { header: "Entrada", accessor: (r: any) => formatDateTime(r.entrada_at) },
+    { header: "Saída", accessor: (r: any) => formatDateTime(r.saida_at) },
+    { header: "Motorista", accessor: (r: any) => r.motoristas?.nome_exibicao ?? "" },
+    { header: "Empresa", accessor: (r: any) => r.empresas?.nome ?? "" },
+    { header: "Posto", accessor: (r: any) => r.postos?.nome ?? "" },
+    { header: "Placa", accessor: (r: any) => r.veiculos?.placa ?? "" },
+    { header: "Km saída", accessor: (r: any) => r.km_saida },
+    { header: "Km volta", accessor: (r: any) => r.km_volta },
+    { header: "Km rodados", accessor: (r: any) => r.km_rodados },
+    { header: "Status", accessor: (r: any) => r.status },
+  ];
+
+  const onExportCsv = async () => {
+    const data = await fetchAllForExport();
+    if (!data) return;
+    if (data.length === 0) return toast.info("Sem dados para exportar.");
+    const csv = buildCsv(data, exportColumns);
     downloadCsv(`registros_${new Date().toISOString().slice(0, 10)}.csv`, csv);
+    toast.success("CSV exportado.");
+  };
+
+  const onExportPdf = async () => {
+    const data = await fetchAllForExport();
+    if (!data) return;
+    if (data.length === 0) return toast.info("Sem dados para exportar.");
+    exportPdf(`registros_${new Date().toISOString().slice(0, 10)}.pdf`, "Relatório de Registros", data, exportColumns);
+    toast.success("PDF exportado.");
   };
 
   const clearFilters = () => {
@@ -133,9 +167,14 @@ const AdminRegistros = () => {
           <h1 className="text-2xl font-bold">Registros</h1>
           <p className="text-sm text-muted-foreground">{formatNumber(count)} registro(s)</p>
         </div>
-        <Button onClick={onExport} variant="outline">
-          <Download className="mr-2 h-4 w-4" /> Exportar CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={onExportCsv} variant="outline">
+            <Download className="mr-2 h-4 w-4" /> Exportar CSV
+          </Button>
+          <Button onClick={onExportPdf} variant="outline">
+            <FileText className="mr-2 h-4 w-4" /> Exportar PDF
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-xl border border-border bg-card p-4">

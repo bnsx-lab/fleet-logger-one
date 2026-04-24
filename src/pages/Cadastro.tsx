@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Truck } from "lucide-react";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { Logo } from "@/components/Logo";
 
 const Cadastro = () => {
   const { ready, session, isAdmin } = useAuth();
@@ -65,11 +65,9 @@ const Cadastro = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Truck className="h-6 w-6" />
-          </div>
+          <Logo className="mb-3 h-16 w-16" />
           <h1 className="text-2xl font-bold">Criar conta</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Cadastro de motorista</p>
+          <p className="mt-1 text-sm text-muted-foreground">Cadastro de motorista ASERP</p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
