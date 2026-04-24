@@ -82,13 +82,21 @@ const AdminMotoristas = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Motoristas</h1>
-          <p className="text-sm text-muted-foreground">{loading ? "Carregando..." : `${filtered.length} motorista(s)`}</p>
+          <h1 className="text-xl font-bold text-foreground">Motoristas</h1>
+          <p className="text-sm text-muted-foreground">
+            {loading ? "Carregando..." : `${filtered.length} motorista${filtered.length !== 1 ? "s" : ""}`}
+          </p>
         </div>
-        <Input placeholder="Buscar por nome ou e-mail" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+        <Input 
+          placeholder="Buscar por nome ou e-mail..." 
+          value={search} 
+          onChange={(e) => setSearch(e.target.value)} 
+          className="max-w-xs"
+        />
       </div>
 
       {!loading && filtered.length === 0 ? (
@@ -96,34 +104,47 @@ const AdminMotoristas = () => {
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+            <thead className="border-b border-border bg-muted/30">
               <tr>
-                <th className="px-4 py-2">Nome</th>
-                <th className="px-4 py-2">E-mail</th>
-                <th className="px-4 py-2">Empresa</th>
-                <th className="px-4 py-2">Posto</th>
-                <th className="px-4 py-2">Matrícula</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2 text-right">Ações</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nome</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">E-mail</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Empresa</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Posto</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Matrícula</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border">
               {filtered.map((m) => (
-                <tr key={m.id} className="border-t border-border hover:bg-muted/30">
-                  <td className="px-4 py-2 font-medium">{m.nome_exibicao}</td>
-                  <td className="px-4 py-2">{m.profiles?.email ?? "—"}</td>
-                  <td className="px-4 py-2">{m.empresas?.nome ?? "—"}</td>
-                  <td className="px-4 py-2">{m.postos?.nome ?? "—"}</td>
-                  <td className="px-4 py-2">{m.matricula ?? "—"}</td>
-                  <td className="px-4 py-2">
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${m.status === "ativo" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>
-                      {m.status}
+                <tr key={m.id} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3 font-medium text-foreground">{m.nome_exibicao}</td>
+                  <td className="px-4 py-3 text-foreground max-w-[200px] truncate" title={m.profiles?.email}>
+                    {m.profiles?.email ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-foreground">{m.empresas?.nome ?? "—"}</td>
+                  <td className="px-4 py-3 text-foreground">{m.postos?.nome ?? "—"}</td>
+                  <td className="px-4 py-3 font-mono text-foreground">{m.matricula ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                      m.status === "ativo" 
+                        ? "border-success/30 bg-success/10 text-success" 
+                        : "border-border bg-muted text-muted-foreground"
+                    }`}>
+                      {m.status === "ativo" ? "Ativo" : "Inativo"}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setEditing(m)}>Editar</Button>
-                      <Button variant="ghost" size="sm" onClick={() => onToggleStatus(m)}>
+                      <Button variant="outline" size="sm" onClick={() => setEditing(m)}>
+                        Editar
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onToggleStatus(m)}
+                        className={m.status === "ativo" ? "text-muted-foreground hover:text-destructive" : "text-success"}
+                      >
                         {m.status === "ativo" ? "Inativar" : "Ativar"}
                       </Button>
                     </div>
@@ -136,43 +157,59 @@ const AdminMotoristas = () => {
       )}
 
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4" onClick={() => setEditing(null)}>
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            <h2 className="mb-4 text-lg font-semibold">Editar motorista</h2>
-            <div className="space-y-3">
-              <div>
-                <Label>Nome de exibição</Label>
-                <Input value={editing.nome_exibicao} onChange={(e) => setEditing({ ...editing, nome_exibicao: e.target.value })} />
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" 
+          onClick={() => setEditing(null)}
+        >
+          <div 
+            className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-5 text-lg font-bold text-foreground">Editar motorista</h2>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Nome de exibição</Label>
+                <Input 
+                  value={editing.nome_exibicao} 
+                  onChange={(e) => setEditing({ ...editing, nome_exibicao: e.target.value })}
+                  className="h-11"
+                />
               </div>
-              <div>
-                <Label>Matrícula</Label>
-                <Input value={editing.matricula ?? ""} onChange={(e) => setEditing({ ...editing, matricula: e.target.value })} />
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Matrícula</Label>
+                <Input 
+                  value={editing.matricula ?? ""} 
+                  onChange={(e) => setEditing({ ...editing, matricula: e.target.value })}
+                  className="h-11"
+                />
               </div>
-              <div>
-                <Label>Empresa</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Empresa</Label>
                 <select
                   value={editing.empresa_id}
                   onChange={(e) => setEditing({ ...editing, empresa_id: e.target.value, posto_principal_id: null })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   {empresas.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
                 </select>
               </div>
-              <div>
-                <Label>Posto principal</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Posto principal</Label>
                 <select
                   value={editing.posto_principal_id ?? ""}
                   onChange={(e) => setEditing({ ...editing, posto_principal_id: e.target.value || null })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  <option value="">—</option>
+                  <option value="">Nenhum</option>
                   {postos.filter(p => p.empresa_id === editing.empresa_id).map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
                 </select>
               </div>
             </div>
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-6 flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
-              <Button onClick={onSaveEdit} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+              <Button onClick={onSaveEdit} disabled={saving}>
+                {saving ? "Salvando..." : "Salvar alterações"}
+              </Button>
             </div>
           </div>
         </div>

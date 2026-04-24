@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { formatNumber } from "@/lib/format";
 import {
   EMPRESA_PADRAO_ID,
   ensureVeiculoByPlaca,
@@ -137,77 +138,147 @@ const MotoristaNovoRegistro = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        >
           <ArrowLeft className="h-4 w-4" />
-        </Button>
+        </button>
         <div>
-          <h1 className="text-2xl font-bold">Novo registro</h1>
-          <p className="text-sm text-muted-foreground">Preencha os dados da sua jornada.</p>
+          <h1 className="text-xl font-bold text-foreground">Novo registro</h1>
+          <p className="text-sm text-muted-foreground">Preencha os dados da sua jornada</p>
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-border bg-card p-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label>Posto</Label>
-            <select
-              value={postoId}
-              onChange={(e) => setPostoId(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Selecione...</option>
-              {postos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <Label>Placa do veículo</Label>
-            <Input
-              value={placa}
-              onChange={(e) => setPlaca(e.target.value.toUpperCase())}
-              placeholder="ABC1D23"
-              maxLength={8}
-              autoCapitalize="characters"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>Data de referência</Label>
-            <Input type="date" value={dataRef} onChange={(e) => setDataRef(e.target.value)} />
-          </div>
-          <div />
-          <div className="space-y-1">
-            <Label>Hora de entrada</Label>
-            <Input type="time" value={horaEntrada} onChange={(e) => setHoraEntrada(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>Hora de saída</Label>
-            <Input type="time" value={horaSaida} onChange={(e) => setHoraSaida(e.target.value)} />
-            <p className="text-xs text-muted-foreground">Se a saída for no dia seguinte, o sistema reconhece automaticamente.</p>
-          </div>
-          <div className="space-y-1">
-            <Label>KM saída</Label>
-            <Input type="number" inputMode="numeric" min={0} value={kmSaida} onChange={(e) => setKmSaida(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>KM volta</Label>
-            <Input type="number" inputMode="numeric" min={0} value={kmVolta} onChange={(e) => setKmVolta(e.target.value)} />
+      <form onSubmit={onSubmit} className="space-y-5">
+        {/* Bloco: Local e Veículo */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Local e veículo
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Posto</Label>
+              <select
+                value={postoId}
+                onChange={(e) => setPostoId(e.target.value)}
+                className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Selecione o posto...</option>
+                {postos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Placa do veículo</Label>
+              <Input
+                value={placa}
+                onChange={(e) => setPlaca(e.target.value.toUpperCase())}
+                placeholder="ABC1D23"
+                maxLength={8}
+                autoCapitalize="characters"
+                className="h-11"
+              />
+            </div>
           </div>
         </div>
 
-        {kmRodados !== null && (
-          <div className={`rounded-md border px-3 py-2 text-sm ${kmRodados < 0 ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/30 bg-accent text-accent-foreground"}`}>
-            KM rodados: <b>{kmRodados}</b>
-            {kmRodados < 0 && " — KM volta não pode ser menor que KM saída."}
+        {/* Bloco: Data e Horários */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Data e horários
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Data de referência</Label>
+              <Input type="date" value={dataRef} onChange={(e) => setDataRef(e.target.value)} className="h-11" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Hora de entrada</Label>
+              <Input type="time" value={horaEntrada} onChange={(e) => setHoraEntrada(e.target.value)} className="h-11" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Hora de saída</Label>
+              <Input type="time" value={horaSaida} onChange={(e) => setHoraSaida(e.target.value)} className="h-11" />
+              <p className="text-xs text-muted-foreground">Reconhece automaticamente virada de dia</p>
+            </div>
           </div>
-        )}
-
-        <div className="space-y-1">
-          <Label>Observação (opcional)</Label>
-          <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={3} maxLength={500} />
         </div>
 
-        <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+        {/* Bloco: Odômetro */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Odômetro
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Odômetro na saída</Label>
+              <Input 
+                type="number" 
+                inputMode="numeric" 
+                min={0} 
+                value={kmSaida} 
+                onChange={(e) => setKmSaida(e.target.value)}
+                placeholder="Ex: 45230"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Odômetro na volta</Label>
+              <Input 
+                type="number" 
+                inputMode="numeric" 
+                min={0} 
+                value={kmVolta} 
+                onChange={(e) => setKmVolta(e.target.value)}
+                placeholder="Ex: 45380"
+                className="h-11"
+              />
+            </div>
+          </div>
+
+          {/* Cálculo de km rodados */}
+          {kmRodados !== null && (
+            <div className={`mt-4 flex items-center justify-between rounded-lg px-4 py-3 ${
+              kmRodados < 0 
+                ? "border border-destructive/30 bg-destructive/5" 
+                : "border border-primary/20 bg-primary/5"
+            }`}>
+              <span className={`text-sm font-medium ${kmRodados < 0 ? "text-destructive" : "text-foreground"}`}>
+                Km rodados
+              </span>
+              <span className={`text-2xl font-bold ${kmRodados < 0 ? "text-destructive" : "text-primary"}`}>
+                {formatNumber(kmRodados)}
+              </span>
+            </div>
+          )}
+          {kmRodados !== null && kmRodados < 0 && (
+            <p className="mt-2 text-xs text-destructive">
+              Odômetro na volta deve ser maior que na saída.
+            </p>
+          )}
+        </div>
+
+        {/* Bloco: Observação */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Observação
+          </h3>
+          <Textarea 
+            value={observacao} 
+            onChange={(e) => setObservacao(e.target.value)} 
+            rows={3} 
+            maxLength={500}
+            placeholder="Opcional: adicione informações relevantes sobre a jornada"
+            className="resize-none"
+          />
+        </div>
+
+        {/* Botão de envio */}
+        <Button type="submit" className="h-12 w-full text-base font-semibold" disabled={submitting}>
           {submitting ? "Salvando..." : "Salvar registro"}
         </Button>
       </form>

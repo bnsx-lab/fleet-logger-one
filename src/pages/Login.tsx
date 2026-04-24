@@ -23,7 +23,7 @@ const Login = () => {
   }, [location.state]);
 
   useEffect(() => {
-    document.title = "Entrar | Registro de Motoristas";
+    document.title = "Entrar | Controle de BDT";
   }, []);
 
   useEffect(() => {
@@ -64,36 +64,78 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <Logo className="mb-3 h-16 w-16" />
-          <h1 className="text-2xl font-bold">ASERP</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Registro digital de motoristas</p>
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* Header institucional */}
+      <header className="flex items-center justify-center border-b border-border bg-card px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Logo className="h-8 w-8" />
+          <span className="text-sm font-semibold text-foreground">ASERP</span>
         </div>
+      </header>
 
-        <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+      {/* Conteúdo principal */}
+      <main className="flex flex-1 items-center justify-center px-4 py-10">
+        <div className="w-full max-w-sm">
+          {/* Branding do sistema */}
+          <div className="mb-8 text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Controle de BDT</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Sistema de registro de deslocamentos
+            </p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? "Entrando..." : "Entrar"}
-          </Button>
-          <div className="flex items-center justify-between text-sm">
-            <Link to="/cadastro" className="text-primary hover:text-primary-hover">Criar conta</Link>
-            <Link to="/recuperar-senha" className="text-primary hover:text-primary-hover">Esqueci minha senha</Link>
-          </div>
-        </form>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Novos motoristas podem se cadastrar. O acesso de administrador é controlado separadamente.
-        </p>
-      </div>
+          {/* Formulário de login */}
+          <form onSubmit={onSubmit} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-medium">E-mail</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                autoComplete="email" 
+                required 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                autoComplete="current-password" 
+                required 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Digite sua senha"
+                className="h-11"
+              />
+            </div>
+            <Button type="submit" className="h-11 w-full text-base font-medium" disabled={submitting}>
+              {submitting ? "Entrando..." : "Entrar"}
+            </Button>
+            <div className="flex items-center justify-between pt-1 text-sm">
+              <Link to="/cadastro" className="font-medium text-primary hover:text-primary-hover transition-colors">
+                Criar conta
+              </Link>
+              <Link to="/recuperar-senha" className="text-muted-foreground hover:text-foreground transition-colors">
+                Esqueci minha senha
+              </Link>
+            </div>
+          </form>
+
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Motoristas podem criar conta livremente.<br />
+            Acesso administrativo requer autorização.
+          </p>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-card px-4 py-3 text-center text-xs text-muted-foreground">
+        ASERP &middot; Controle de BDT
+      </footer>
     </div>
   );
 };

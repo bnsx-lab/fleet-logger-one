@@ -105,15 +105,25 @@ export function AdminEntidadeCRUD<T extends { id: string; status: EntidadeStatus
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{title}</h1>
-          <p className="text-sm text-muted-foreground">{loading ? "Carregando..." : `${filtered.length} item(ns)`}</p>
+          <h1 className="text-xl font-bold text-foreground">{title}</h1>
+          <p className="text-sm text-muted-foreground">
+            {loading ? "Carregando..." : `${filtered.length} ite${filtered.length !== 1 ? "ns" : "m"}`}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
-          <Button onClick={() => setEditing({} as Partial<T>)}><Plus className="mr-1 h-4 w-4" /> Novo</Button>
+        <div className="flex items-center gap-3">
+          <Input 
+            placeholder="Buscar..." 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)} 
+            className="max-w-xs"
+          />
+          <Button onClick={() => setEditing({} as Partial<T>)} className="gap-1.5">
+            <Plus className="h-4 w-4" /> Novo
+          </Button>
         </div>
       </div>
 
@@ -122,26 +132,43 @@ export function AdminEntidadeCRUD<T extends { id: string; status: EntidadeStatus
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+            <thead className="border-b border-border bg-muted/30">
               <tr>
-                {columnHeaders.map((h) => <th key={h} className="px-4 py-2">{h}</th>)}
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2 text-right">Ações</th>
+                {columnHeaders.map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {h}
+                  </th>
+                ))}
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border">
               {filtered.map((r) => (
-                <tr key={r.id} className="border-t border-border hover:bg-muted/30">
-                  {renderRow(r).map((cell, i) => <td key={i} className="px-4 py-2">{cell}</td>)}
-                  <td className="px-4 py-2">
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${r.status === "ativo" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>
-                      {r.status}
+                <tr key={r.id} className="hover:bg-muted/20 transition-colors">
+                  {renderRow(r).map((cell, i) => (
+                    <td key={i} className="px-4 py-3 text-foreground">{cell}</td>
+                  ))}
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                      r.status === "ativo" 
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700" 
+                        : "border-slate-200 bg-slate-50 text-slate-600"
+                    }`}>
+                      {r.status === "ativo" ? "Ativo" : "Inativo"}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setEditing(r as any)}>Editar</Button>
-                      <Button variant="ghost" size="sm" onClick={() => onToggleStatus(r)}>
+                      <Button variant="outline" size="sm" onClick={() => setEditing(r as any)}>
+                        Editar
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onToggleStatus(r)}
+                        className={r.status === "ativo" ? "text-muted-foreground hover:text-destructive" : "text-emerald-600"}
+                      >
                         {r.status === "ativo" ? "Inativar" : "Ativar"}
                       </Button>
                     </div>
@@ -153,22 +180,31 @@ export function AdminEntidadeCRUD<T extends { id: string; status: EntidadeStatus
         </div>
       )}
 
+      {/* Modal de edição */}
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4" onClick={() => setEditing(null)}>
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            <h2 className="mb-4 text-lg font-semibold">{(editing as any).id ? "Editar" : "Novo"}</h2>
-            <div className="space-y-3">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" 
+          onClick={() => setEditing(null)}
+        >
+          <div 
+            className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-5 text-lg font-bold text-foreground">
+              {(editing as any).id ? "Editar" : "Novo"}
+            </h2>
+            <div className="space-y-4">
               {fields.map((f) => {
                 const value = (editing as any)[f.name] ?? "";
                 if (f.type === "select") {
                   const opts = f.options ?? options[f.name] ?? [];
                   return (
-                    <div key={f.name}>
-                      <Label>{f.label}{f.required && " *"}</Label>
+                    <div key={f.name} className="space-y-1.5">
+                      <Label className="text-sm font-medium">{f.label}{f.required && " *"}</Label>
                       <select
                         value={value}
                         onChange={(e) => setEditing({ ...editing, [f.name]: e.target.value } as any)}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                        className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <option value="">Selecione...</option>
                         {opts.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
@@ -177,20 +213,23 @@ export function AdminEntidadeCRUD<T extends { id: string; status: EntidadeStatus
                   );
                 }
                 return (
-                  <div key={f.name}>
-                    <Label>{f.label}{f.required && " *"}</Label>
+                  <div key={f.name} className="space-y-1.5">
+                    <Label className="text-sm font-medium">{f.label}{f.required && " *"}</Label>
                     <Input
                       value={value}
                       maxLength={f.maxLength}
                       onChange={(e) => setEditing({ ...editing, [f.name]: f.uppercase ? e.target.value.toUpperCase() : e.target.value } as any)}
+                      className="h-11"
                     />
                   </div>
                 );
               })}
             </div>
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-6 flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
-              <Button onClick={onSave} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+              <Button onClick={onSave} disabled={saving}>
+                {saving ? "Salvando..." : "Salvar"}
+              </Button>
             </div>
           </div>
         </div>

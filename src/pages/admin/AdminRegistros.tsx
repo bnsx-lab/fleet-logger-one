@@ -161,27 +161,31 @@ const AdminRegistros = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Registros</h1>
-          <p className="text-sm text-muted-foreground">{formatNumber(count)} registro(s)</p>
+          <h1 className="text-xl font-bold text-foreground">Registros</h1>
+          <p className="text-sm text-muted-foreground">
+            {formatNumber(count)} registro{count !== 1 ? "s" : ""} encontrado{count !== 1 ? "s" : ""}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={onExportCsv} variant="outline">
-            <Download className="mr-2 h-4 w-4" /> Exportar CSV
+          <Button onClick={onExportCsv} variant="outline" size="sm" className="gap-1.5">
+            <Download className="h-4 w-4" /> CSV
           </Button>
-          <Button onClick={onExportPdf} variant="outline">
-            <FileText className="mr-2 h-4 w-4" /> Exportar PDF
+          <Button onClick={onExportPdf} variant="outline" size="sm" className="gap-1.5">
+            <FileText className="h-4 w-4" /> PDF
           </Button>
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-4">
-        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+      {/* Painel de filtros */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <Filter className="h-4 w-4" /> Filtros
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Select label="Motorista" value={motoristaId} onChange={setMotoristaId} options={motoristas} />
           <Select label="Empresa" value={empresaId} onChange={setEmpresaId} options={empresas} />
           <Select label="Posto" value={postoId} onChange={setPostoId} options={postos} />
@@ -213,48 +217,58 @@ const AdminRegistros = () => {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <div className="rounded-xl border border-border bg-card p-6">
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
       ) : rows.length === 0 ? (
         <EmptyState title="Nenhum registro encontrado" description="Ajuste os filtros ou aguarde novos registros." />
       ) : (
         <>
           <div className="overflow-x-auto rounded-xl border border-border bg-card">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+              <thead className="border-b border-border bg-muted/30">
                 <tr>
-                  <th className="px-4 py-2">Data</th>
-                  <th className="px-4 py-2">Motorista</th>
-                  <th className="px-4 py-2">Empresa</th>
-                  <th className="px-4 py-2">Posto</th>
-                  <th className="px-4 py-2">Placa</th>
-                  <th className="px-4 py-2">Km</th>
-                  <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Data</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Motorista</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Empresa</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Posto</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Placa</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Km</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border">
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-border hover:bg-muted/30">
-                    <td className="px-4 py-2 whitespace-nowrap">{formatDate(r.data_referencia)}</td>
-                    <td className="px-4 py-2">
+                  <tr key={r.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3 whitespace-nowrap font-medium text-foreground">{formatDate(r.data_referencia)}</td>
+                    <td className="px-4 py-3">
                       <Link to={`/admin/registros/${r.id}`} className="font-medium text-primary hover:underline">
                         {r.motoristas?.nome_exibicao ?? "—"}
                       </Link>
                     </td>
-                    <td className="px-4 py-2">{r.empresas?.nome ?? "—"}</td>
-                    <td className="px-4 py-2">{r.postos?.nome ?? "—"}</td>
-                    <td className="px-4 py-2">{r.veiculos?.placa ?? "—"}</td>
-                    <td className="px-4 py-2">{formatNumber(r.km_rodados)}</td>
-                    <td className="px-4 py-2"><StatusBadge status={r.status} /></td>
+                    <td className="px-4 py-3 text-foreground">{r.empresas?.nome ?? "—"}</td>
+                    <td className="px-4 py-3 text-foreground">{r.postos?.nome ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-foreground">{r.veiculos?.placa ?? "—"}</td>
+                    <td className="px-4 py-3 text-right font-bold text-primary">{formatNumber(r.km_rodados)}</td>
+                    <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Página {page + 1} de {totalPages}</span>
+          
+          {/* Paginação */}
+          <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+            <span className="text-sm text-muted-foreground">
+              Página <span className="font-medium text-foreground">{page + 1}</span> de <span className="font-medium text-foreground">{totalPages}</span>
+            </span>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
-              <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Próxima</Button>
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+                Anterior
+              </Button>
+              <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                Próxima
+              </Button>
             </div>
           </div>
         </>

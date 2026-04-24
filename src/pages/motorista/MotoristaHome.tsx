@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge, RegistroStatus } from "@/components/StatusBadge";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
-import { Plus, History, FileText } from "lucide-react";
+import { Plus, History, FileText, TrendingUp, Calendar } from "lucide-react";
 
 type Profile = { nome: string };
 type Stats = { hoje: number; total: number };
@@ -59,64 +59,100 @@ const MotoristaHome = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Olá, {nome}</h1>
-        <p className="text-sm text-muted-foreground">Registre suas saídas e voltas com poucos toques.</p>
+      {/* Saudação com destaque no nome */}
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <p className="text-sm text-muted-foreground">Bem-vindo de volta,</p>
+        <h1 className="mt-0.5 text-2xl font-bold text-foreground">{nome}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Registre suas jornadas de forma rápida e simples.
+        </p>
       </div>
 
+      {/* CTA Principal - Novo Registro */}
+      <Button asChild size="lg" className="h-14 w-full gap-2.5 text-base font-semibold shadow-sm">
+        <Link to="/app/novo">
+          <Plus className="h-5 w-5" /> Novo registro
+        </Link>
+      </Button>
+
+      {/* Cards de resumo */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs uppercase text-muted-foreground">Hoje</p>
-          <p className="mt-1 text-2xl font-bold">{loading ? "—" : formatNumber(stats.hoje)}</p>
-          <p className="text-xs text-muted-foreground">registro(s)</p>
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <Calendar className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-foreground">{loading ? "—" : formatNumber(stats.hoje)}</p>
+            <p className="text-xs text-muted-foreground">Hoje</p>
+          </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs uppercase text-muted-foreground">Total</p>
-          <p className="mt-1 text-2xl font-bold">{loading ? "—" : formatNumber(stats.total)}</p>
-          <p className="text-xs text-muted-foreground">no histórico</p>
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <TrendingUp className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-foreground">{loading ? "—" : formatNumber(stats.total)}</p>
+            <p className="text-xs text-muted-foreground">Total</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Button asChild size="lg" className="h-14 text-base">
-          <Link to="/app/novo">
-            <Plus className="mr-2 h-5 w-5" /> Novo registro
-          </Link>
-        </Button>
-        <Button asChild variant="outline" size="lg" className="h-14 text-base">
-          <Link to="/app/historico">
-            <History className="mr-2 h-5 w-5" /> Meu histórico
-          </Link>
-        </Button>
-      </div>
+      {/* Link para histórico */}
+      <Button asChild variant="outline" size="lg" className="h-12 w-full gap-2 text-sm font-medium">
+        <Link to="/app/historico">
+          <History className="h-4 w-4" /> Ver meu histórico
+        </Link>
+      </Button>
 
+      {/* Último registro */}
       <div>
-        <h2 className="mb-2 text-base font-semibold">Último registro</h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Último registro
+        </h2>
         {loading ? (
-          <p className="text-sm text-muted-foreground">Carregando...</p>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-sm text-muted-foreground">Carregando...</p>
+          </div>
         ) : !ultimo ? (
-          <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-card px-6 py-10 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-primary">
-              <FileText className="h-6 w-6" />
+          <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <FileText className="h-5 w-5 text-muted-foreground" />
             </div>
-            <h3 className="text-base font-semibold">Nenhum registro ainda</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Toque em “Novo registro” para começar.</p>
+            <h3 className="text-sm font-medium text-foreground">Nenhum registro ainda</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Toque no botão acima para criar seu primeiro registro.
+            </p>
           </div>
         ) : (
           <Link
-            to={`/app/historico`}
-            className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
+            to="/app/historico"
+            className="block rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-sm"
           >
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-medium">{formatDate(ultimo.data_referencia)}</span>
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-semibold text-foreground">{formatDate(ultimo.data_referencia)}</span>
               <StatusBadge status={ultimo.status} />
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div><span className="text-muted-foreground">Posto:</span> {ultimo.postos?.nome ?? "—"}</div>
-              <div><span className="text-muted-foreground">Placa:</span> {ultimo.veiculos?.placa ?? "—"}</div>
-              <div><span className="text-muted-foreground">Entrada:</span> {formatDateTime(ultimo.entrada_at)}</div>
-              <div><span className="text-muted-foreground">Saída:</span> {formatDateTime(ultimo.saida_at)}</div>
-              <div className="col-span-2"><span className="text-muted-foreground">Km rodados:</span> <b>{formatNumber(ultimo.km_rodados)}</b></div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <div>
+                <span className="text-xs text-muted-foreground">Posto</span>
+                <p className="font-medium text-foreground">{ultimo.postos?.nome ?? "—"}</p>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground">Placa</span>
+                <p className="font-medium text-foreground">{ultimo.veiculos?.placa ?? "—"}</p>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground">Entrada</span>
+                <p className="font-medium text-foreground">{formatDateTime(ultimo.entrada_at)}</p>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground">Saída</span>
+                <p className="font-medium text-foreground">{formatDateTime(ultimo.saida_at)}</p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between rounded-lg bg-accent/50 px-3 py-2">
+              <span className="text-xs font-medium text-muted-foreground">Km rodados</span>
+              <span className="text-lg font-bold text-primary">{formatNumber(ultimo.km_rodados)}</span>
             </div>
           </Link>
         )}

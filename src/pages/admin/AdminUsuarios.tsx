@@ -83,16 +83,18 @@ const AdminUsuarios = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Usuários</h1>
+          <h1 className="text-xl font-bold text-foreground">Usuários</h1>
           <p className="text-sm text-muted-foreground">
-            {loading ? "Carregando..." : `${filtered.length} usuário(s)`} · promova outros administradores aqui
+            {loading ? "Carregando..." : `${filtered.length} usuário${filtered.length !== 1 ? "s" : ""}`}
+            <span className="hidden sm:inline"> · Gerencie acessos administrativos</span>
           </p>
         </div>
         <Input
-          placeholder="Buscar por nome ou e-mail"
+          placeholder="Buscar por nome ou e-mail..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"
@@ -104,54 +106,59 @@ const AdminUsuarios = () => {
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+            <thead className="border-b border-border bg-muted/30">
               <tr>
-                <th className="px-4 py-2">Nome</th>
-                <th className="px-4 py-2">E-mail</th>
-                <th className="px-4 py-2">Perfis</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2 text-right">Ações</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nome</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">E-mail</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Perfis</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border">
               {filtered.map((p) => {
                 const userRoles = roles[p.id] ?? [];
                 const isAdmin = userRoles.includes("admin");
                 const isMe = p.id === user?.id;
                 return (
-                  <tr key={p.id} className="border-t border-border hover:bg-muted/30">
-                    <td className="px-4 py-2 font-medium">
-                      {p.nome || "—"} {isMe && <span className="ml-1 text-xs text-muted-foreground">(você)</span>}
+                  <tr key={p.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3 font-medium text-foreground">
+                      {p.nome || "—"} 
+                      {isMe && <span className="ml-1.5 text-xs text-muted-foreground">(você)</span>}
                     </td>
-                    <td className="px-4 py-2">{p.email}</td>
-                    <td className="px-4 py-2">
-                      <div className="flex flex-wrap gap-1">
+                    <td className="px-4 py-3 text-foreground max-w-[200px] truncate" title={p.email}>
+                      {p.email}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1.5">
                         {userRoles.length === 0 ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : userRoles.map((r) => (
                           <span
                             key={r}
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
                               r === "admin"
-                                ? "bg-primary/15 text-primary"
-                                : "bg-accent text-accent-foreground"
+                                ? "border-primary/30 bg-primary/10 text-primary"
+                                : "border-slate-200 bg-slate-50 text-slate-600"
                             }`}
                           >
-                            {r}
+                            {r === "admin" ? "Admin" : "Motorista"}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-3">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs ${
-                          p.status === "ativo" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
+                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                          p.status === "ativo" 
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700" 
+                            : "border-slate-200 bg-slate-50 text-slate-600"
                         }`}
                       >
-                        {p.status}
+                        {p.status === "ativo" ? "Ativo" : "Inativo"}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
                         {isAdmin ? (
                           <Button
@@ -160,8 +167,10 @@ const AdminUsuarios = () => {
                             disabled={busy === p.id || isMe}
                             onClick={() => demote(p.id)}
                             title={isMe ? "Você não pode remover seu próprio acesso" : ""}
+                            className="gap-1.5"
                           >
-                            <ShieldOff className="mr-1 h-4 w-4" /> Remover admin
+                            <ShieldOff className="h-4 w-4" /> 
+                            <span className="hidden sm:inline">Remover admin</span>
                           </Button>
                         ) : (
                           <Button
@@ -169,8 +178,10 @@ const AdminUsuarios = () => {
                             size="sm"
                             disabled={busy === p.id}
                             onClick={() => promote(p.id)}
+                            className="gap-1.5"
                           >
-                            <ShieldCheck className="mr-1 h-4 w-4" /> Promover a admin
+                            <ShieldCheck className="h-4 w-4" /> 
+                            <span className="hidden sm:inline">Promover</span>
                           </Button>
                         )}
                         <Button
@@ -179,9 +190,10 @@ const AdminUsuarios = () => {
                           disabled={busy === p.id || isMe}
                           onClick={() => toggleStatus(p)}
                           title={isMe ? "Você não pode inativar a si mesmo" : ""}
+                          className={`gap-1.5 ${p.status === "ativo" ? "text-muted-foreground hover:text-destructive" : "text-emerald-600"}`}
                         >
-                          <Power className="mr-1 h-4 w-4" />
-                          {p.status === "ativo" ? "Inativar" : "Ativar"}
+                          <Power className="h-4 w-4" />
+                          <span className="hidden sm:inline">{p.status === "ativo" ? "Inativar" : "Ativar"}</span>
                         </Button>
                       </div>
                     </td>
