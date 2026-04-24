@@ -17,11 +17,16 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRegistros from "./pages/admin/AdminRegistros";
 import AdminRegistroDetalhe from "./pages/admin/AdminRegistroDetalhe";
-import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
+import AdminMotoristas from "./pages/admin/AdminMotoristas";
+import AdminPostos from "./pages/admin/AdminPostos";
+import AdminVeiculos from "./pages/admin/AdminVeiculos";
+import AdminEmpresas from "./pages/admin/AdminEmpresas";
 
 import MotoristaLayout from "./pages/motorista/MotoristaLayout";
 import MotoristaHome from "./pages/motorista/MotoristaHome";
 import MotoristaHistorico from "./pages/motorista/MotoristaHistorico";
+import MotoristaNovoRegistro from "./pages/motorista/MotoristaNovoRegistro";
+import MotoristaSucesso from "./pages/motorista/MotoristaSucesso";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +50,8 @@ const App = () => (
               element={<ProtectedRoute><MotoristaLayout /></ProtectedRoute>}
             >
               <Route index element={<MotoristaHome />} />
+              <Route path="novo" element={<MotoristaNovoRegistro />} />
+              <Route path="sucesso" element={<MotoristaSucesso />} />
               <Route path="historico" element={<MotoristaHistorico />} />
             </Route>
 
@@ -56,10 +63,10 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="registros" element={<AdminRegistros />} />
               <Route path="registros/:id" element={<AdminRegistroDetalhe />} />
-              <Route path="motoristas" element={<AdminPlaceholder title="Motoristas" />} />
-              <Route path="postos" element={<AdminPlaceholder title="Postos" />} />
-              <Route path="veiculos" element={<AdminPlaceholder title="Veículos" />} />
-              <Route path="empresas" element={<AdminPlaceholder title="Empresas" />} />
+              <Route path="motoristas" element={<AdminMotoristas />} />
+              <Route path="postos" element={<AdminPostos />} />
+              <Route path="veiculos" element={<AdminVeiculos />} />
+              <Route path="empresas" element={<AdminEmpresas />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
