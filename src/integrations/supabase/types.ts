@@ -267,6 +267,7 @@ export type Database = {
           data_referencia: string
           empresa_id: string
           entrada_at: string
+          foto_path: string | null
           id: string
           km_rodados: number
           km_saida: number
@@ -285,6 +286,7 @@ export type Database = {
           data_referencia: string
           empresa_id: string
           entrada_at: string
+          foto_path?: string | null
           id?: string
           km_rodados?: number
           km_saida: number
@@ -303,6 +305,7 @@ export type Database = {
           data_referencia?: string
           empresa_id?: string
           entrada_at?: string
+          foto_path?: string | null
           id?: string
           km_rodados?: number
           km_saida?: number
