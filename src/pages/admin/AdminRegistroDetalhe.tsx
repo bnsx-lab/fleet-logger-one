@@ -10,6 +10,7 @@ import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { fotoPublicUrl } from "@/lib/registros";
 
 type Registro = {
   id: string;
@@ -21,6 +22,7 @@ type Registro = {
   km_rodados: number;
   observacao: string | null;
   status: RegistroStatus;
+  foto_path: string | null;
   motoristas: { nome_exibicao: string } | null;
   empresas: { nome: string } | null;
   postos: { nome: string } | null;
@@ -69,7 +71,7 @@ const AdminRegistroDetalhe = () => {
     const [r, a] = await Promise.all([
       supabase
         .from("registros")
-        .select("id, data_referencia, entrada_at, saida_at, km_saida, km_volta, km_rodados, observacao, status, motoristas(nome_exibicao), empresas(nome), postos(nome), veiculos(placa)")
+        .select("id, data_referencia, entrada_at, saida_at, km_saida, km_volta, km_rodados, observacao, status, foto_path, motoristas(nome_exibicao), empresas(nome), postos(nome), veiculos(placa)")
         .eq("id", id)
         .maybeSingle(),
       supabase
@@ -145,6 +147,15 @@ const AdminRegistroDetalhe = () => {
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs uppercase text-muted-foreground">Observação</p>
           <p className="mt-1 text-sm">{reg.observacao}</p>
+        </div>
+      )}
+
+      {reg.foto_path && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="mb-2 text-xs uppercase text-muted-foreground">Foto anexada</p>
+          <a href={fotoPublicUrl(reg.foto_path) ?? "#"} target="_blank" rel="noopener noreferrer">
+            <img src={fotoPublicUrl(reg.foto_path) ?? ""} alt="Foto do registro" className="max-h-96 w-full rounded-lg border border-border object-contain" />
+          </a>
         </div>
       )}
 
