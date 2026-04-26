@@ -162,17 +162,17 @@ const AdminRegistros = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Registros</h1>
           <p className="text-sm text-muted-foreground">{formatNumber(count)} registro(s)</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={onExportCsv} variant="outline">
-            <Download className="mr-2 h-4 w-4" /> Exportar CSV
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+          <Button onClick={onExportCsv} variant="outline" className="w-full sm:w-auto">
+            <Download className="mr-2 h-4 w-4" /> CSV
           </Button>
-          <Button onClick={onExportPdf} variant="outline">
-            <FileText className="mr-2 h-4 w-4" /> Exportar PDF
+          <Button onClick={onExportPdf} variant="outline" className="w-full sm:w-auto">
+            <FileText className="mr-2 h-4 w-4" /> PDF
           </Button>
         </div>
       </div>
@@ -218,7 +218,31 @@ const AdminRegistros = () => {
         <EmptyState title="Nenhum registro encontrado" description="Ajuste os filtros ou aguarde novos registros." />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-border bg-card">
+          {/* Mobile cards */}
+          <div className="space-y-2 md:hidden">
+            {rows.map((r) => (
+              <Link
+                key={r.id}
+                to={`/admin/registros/${r.id}`}
+                className="block rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40"
+              >
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-sm font-semibold">{formatDate(r.data_referencia)}</span>
+                  <StatusBadge status={r.status} />
+                </div>
+                <p className="truncate text-sm font-medium text-primary">{r.motoristas?.nome_exibicao ?? "—"}</p>
+                <div className="mt-1 grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                  <div><span>Empresa:</span> <span className="text-foreground">{r.empresas?.nome ?? "—"}</span></div>
+                  <div><span>Posto:</span> <span className="text-foreground">{r.postos?.nome ?? "—"}</span></div>
+                  <div><span>Placa:</span> <span className="text-foreground">{r.veiculos?.placa ?? "—"}</span></div>
+                  <div><span>Km rodados:</span> <span className="font-semibold text-foreground">{formatNumber(r.km_rodados)}</span></div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-xl border border-border bg-card md:block">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
                 <tr>
@@ -250,6 +274,7 @@ const AdminRegistros = () => {
               </tbody>
             </table>
           </div>
+
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Página {page + 1} de {totalPages}</span>
             <div className="flex gap-2">

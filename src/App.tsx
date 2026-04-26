@@ -27,6 +27,7 @@ import MotoristaLayout from "./pages/motorista/MotoristaLayout";
 import MotoristaHome from "./pages/motorista/MotoristaHome";
 import MotoristaHistorico from "./pages/motorista/MotoristaHistorico";
 import MotoristaNovoRegistro from "./pages/motorista/MotoristaNovoRegistro";
+import MotoristaEditarRegistro from "./pages/motorista/MotoristaEditarRegistro";
 import MotoristaSucesso from "./pages/motorista/MotoristaSucesso";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="novo" element={<MotoristaNovoRegistro />} />
               <Route path="sucesso" element={<MotoristaSucesso />} />
               <Route path="historico" element={<MotoristaHistorico />} />
+              <Route path="registros/:id/editar" element={<MotoristaEditarRegistro />} />
             </Route>
 
             {/* Admin */}

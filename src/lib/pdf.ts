@@ -18,7 +18,7 @@ export const exportPdf = <T,>(
   // Cabeçalho
   doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
-  doc.text("ASERP — " + title, 40, 40);
+  doc.text("Controle de BDT — ASERP — " + title, 40, 40);
 
   doc.setFontSize(10);
   doc.setTextColor(110, 110, 110);

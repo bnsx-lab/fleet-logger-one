@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, FormEvent } from "react";
+import { useEffect, useMemo, useState, FormEvent, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,13 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, X } from "lucide-react";
 import {
   EMPRESA_PADRAO_ID,
   ensureVeiculoByPlaca,
   combineDateTime,
   resolveSaidaAt,
   normalizePlaca,
+  isPlacaValida,
+  uploadFotoRegistro,
 } from "@/lib/registros";
 
 type Posto = { id: string; nome: string };
@@ -33,17 +35,23 @@ const MotoristaNovoRegistro = () => {
   const [postos, setPostos] = useState<Posto[]>([]);
   const [loadingCtx, setLoadingCtx] = useState(true);
 
-  const [postoId, setPostoId] = useState("");
-  const [placa, setPlaca] = useState("");
+  // Ordem dos campos pedida pelo usuário:
+  // data → km inicial → km final → entrada → saída → posto → placa → observação → foto
   const [dataRef, setDataRef] = useState(todayISO());
-  const [horaEntrada, setHoraEntrada] = useState(nowHHMM());
-  const [horaSaida, setHoraSaida] = useState("");
   const [kmSaida, setKmSaida] = useState("");
   const [kmVolta, setKmVolta] = useState("");
+  const [horaEntrada, setHoraEntrada] = useState(nowHHMM());
+  const [horaSaida, setHoraSaida] = useState("");
+  const [postoId, setPostoId] = useState("");
+  const [placa, setPlaca] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [foto, setFoto] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
+
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { document.title = "Novo registro"; }, []);
+  useEffect(() => { document.title = "Novo registro | Controle de BDT"; }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -67,28 +75,56 @@ const MotoristaNovoRegistro = () => {
   const kmRodados = useMemo(() => {
     const a = Number(kmSaida);
     const b = Number(kmVolta);
-    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    if (!Number.isFinite(a) || !Number.isFinite(b) || kmSaida === "" || kmVolta === "") return null;
     return b - a;
   }, [kmSaida, kmVolta]);
+
+  const onPickFoto = (file: File | null) => {
+    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+    if (!file) {
+      setFoto(null);
+      setFotoPreview(null);
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("A imagem precisa ter até 8 MB.");
+      return;
+    }
+    setFoto(file);
+    setFotoPreview(URL.createObjectURL(file));
+  };
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (submitting || !user || !motorista) return;
 
-    if (!postoId) return toast.error("Selecione o posto.");
-    if (normalizePlaca(placa).length < 5) return toast.error("Informe uma placa válida.");
     if (!dataRef) return toast.error("Informe a data de referência.");
-    if (!horaEntrada || !horaSaida) return toast.error("Informe entrada e saída.");
     const a = Number(kmSaida), b = Number(kmVolta);
-    if (!Number.isFinite(a) || a < 0) return toast.error("KM de saída inválido.");
-    if (!Number.isFinite(b) || b < 0) return toast.error("KM de volta inválido.");
-    if (b < a) return toast.error("KM de volta não pode ser menor que KM de saída.");
+    if (kmSaida === "" || !Number.isFinite(a) || a < 0) return toast.error("Informe um KM inicial válido (não pode ser negativo).");
+    if (kmVolta === "" || !Number.isFinite(b) || b < 0) return toast.error("Informe um KM final válido (não pode ser negativo).");
+    if (b < a) return toast.error("O KM final não pode ser menor que o KM inicial.");
+    if (!horaEntrada || !horaSaida) return toast.error("Informe hora de entrada e hora de saída.");
+    if (!postoId) return toast.error("Selecione o posto.");
+    if (!isPlacaValida(placa)) return toast.error("Informe uma placa válida (ex.: ABC1234 ou ABC1D23).");
 
     setSubmitting(true);
     try {
       const veiculoId = await ensureVeiculoByPlaca(placa, motorista.empresa_id ?? EMPRESA_PADRAO_ID);
       const entradaAt = combineDateTime(dataRef, horaEntrada);
       const saidaAt = resolveSaidaAt(entradaAt, dataRef, horaSaida);
+
+      let fotoPath: string | null = null;
+      if (foto) {
+        try {
+          fotoPath = await uploadFotoRegistro(user.id, foto);
+        } catch (err: any) {
+          toast.error("Não foi possível enviar a foto. O registro será salvo sem imagem.");
+        }
+      }
 
       const { error } = await supabase.from("registros").insert({
         profile_id: user.id,
@@ -102,6 +138,7 @@ const MotoristaNovoRegistro = () => {
         km_saida: a,
         km_volta: b,
         observacao: observacao.trim() || null,
+        foto_path: fotoPath,
         status: "pendente",
       });
 
@@ -109,7 +146,7 @@ const MotoristaNovoRegistro = () => {
         if (/registros_unico_motorista_data_veiculo|duplicate key/i.test(error.message)) {
           toast.error("Já existe um registro seu para essa placa nesta data.");
         } else if (/KM da volta/i.test(error.message)) {
-          toast.error("KM da volta não pode ser menor que KM de saída.");
+          toast.error("O KM final não pode ser menor que o KM inicial.");
         } else if (/Hor[aá]rio de sa[ií]da/i.test(error.message)) {
           toast.error("Horário inválido. Verifique entrada e saída.");
         } else {
@@ -136,83 +173,157 @@ const MotoristaNovoRegistro = () => {
     );
   }
 
+  const kmInvalido = kmRodados !== null && kmRodados < 0;
+
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} aria-label="Voltar">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Novo registro</h1>
-          <p className="text-sm text-muted-foreground">Preencha os dados da sua jornada.</p>
+          <h1 className="text-2xl font-bold">Novo BDT</h1>
+          <p className="text-sm text-muted-foreground">Boletim Diário de Transporte — preencha os dados da jornada.</p>
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-border bg-card p-4">
+      <form onSubmit={onSubmit} className="space-y-5 rounded-2xl border border-border bg-card p-5 shadow-sm">
+        {/* 1. Data */}
+        <Field label="Data" required>
+          <Input type="date" value={dataRef} onChange={(e) => setDataRef(e.target.value)} required />
+        </Field>
+
+        {/* 2 & 3. KM inicial e final */}
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label>Posto</Label>
-            <select
-              value={postoId}
-              onChange={(e) => setPostoId(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Selecione...</option>
-              {postos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <Label>Placa do veículo</Label>
+          <Field label="KM inicial" required>
             <Input
-              value={placa}
-              onChange={(e) => setPlaca(e.target.value.toUpperCase())}
-              placeholder="ABC1D23"
-              maxLength={8}
-              autoCapitalize="characters"
+              type="number" inputMode="numeric" min={0} step={1}
+              value={kmSaida}
+              onChange={(e) => setKmSaida(e.target.value)}
+              placeholder="Ex.: 12345"
+              required
             />
-          </div>
-          <div className="space-y-1">
-            <Label>Data de referência</Label>
-            <Input type="date" value={dataRef} onChange={(e) => setDataRef(e.target.value)} />
-          </div>
-          <div />
-          <div className="space-y-1">
-            <Label>Hora de entrada</Label>
-            <Input type="time" value={horaEntrada} onChange={(e) => setHoraEntrada(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>Hora de saída</Label>
-            <Input type="time" value={horaSaida} onChange={(e) => setHoraSaida(e.target.value)} />
-            <p className="text-xs text-muted-foreground">Se a saída for no dia seguinte, o sistema reconhece automaticamente.</p>
-          </div>
-          <div className="space-y-1">
-            <Label>KM saída</Label>
-            <Input type="number" inputMode="numeric" min={0} value={kmSaida} onChange={(e) => setKmSaida(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>KM volta</Label>
-            <Input type="number" inputMode="numeric" min={0} value={kmVolta} onChange={(e) => setKmVolta(e.target.value)} />
-          </div>
+          </Field>
+          <Field label="KM final" required>
+            <Input
+              type="number" inputMode="numeric" min={0} step={1}
+              value={kmVolta}
+              onChange={(e) => setKmVolta(e.target.value)}
+              placeholder="Ex.: 12420"
+              required
+            />
+          </Field>
         </div>
 
-        {kmRodados !== null && (
-          <div className={`rounded-md border px-3 py-2 text-sm ${kmRodados < 0 ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/30 bg-accent text-accent-foreground"}`}>
-            KM rodados: <b>{kmRodados}</b>
-            {kmRodados < 0 && " — KM volta não pode ser menor que KM saída."}
-          </div>
-        )}
-
-        <div className="space-y-1">
-          <Label>Observação (opcional)</Label>
-          <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={3} maxLength={500} />
+        {/* Destaque KM rodados */}
+        <div
+          className={`rounded-xl border-2 px-4 py-3 text-center transition-colors ${
+            kmRodados === null
+              ? "border-dashed border-border bg-muted/30 text-muted-foreground"
+              : kmInvalido
+                ? "border-destructive/50 bg-destructive/10 text-destructive"
+                : "border-primary/40 bg-primary/5"
+          }`}
+        >
+          <p className="text-xs uppercase tracking-wide">KM rodados</p>
+          <p className={`mt-0.5 text-3xl font-bold ${kmInvalido ? "" : "text-foreground"}`}>
+            {kmRodados === null ? "—" : kmRodados}
+          </p>
+          {kmInvalido && (
+            <p className="mt-1 text-xs">O KM final não pode ser menor que o KM inicial.</p>
+          )}
         </div>
 
-        <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-          {submitting ? "Salvando..." : "Salvar registro"}
+        {/* 4 & 5. Horários */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Hora de entrada" required>
+            <Input type="time" value={horaEntrada} onChange={(e) => setHoraEntrada(e.target.value)} required />
+          </Field>
+          <Field label="Hora de saída" required hint="Se a saída for no dia seguinte (turno noturno), o sistema reconhece automaticamente.">
+            <Input type="time" value={horaSaida} onChange={(e) => setHoraSaida(e.target.value)} required />
+          </Field>
+        </div>
+
+        {/* 6. Posto */}
+        <Field label="Posto" required>
+          <select
+            value={postoId}
+            onChange={(e) => setPostoId(e.target.value)}
+            className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            required
+          >
+            <option value="">Selecione...</option>
+            {postos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+          </select>
+        </Field>
+
+        {/* 7. Placa */}
+        <Field label="Placa do veículo" required hint="Aceita placa antiga (ABC1234) ou Mercosul (ABC1D23). Pode digitar com ou sem hífen.">
+          <Input
+            value={placa}
+            onChange={(e) => setPlaca(e.target.value.toUpperCase())}
+            onBlur={() => setPlaca((v) => normalizePlaca(v))}
+            placeholder="ABC1D23"
+            maxLength={8}
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
+            className="uppercase tracking-wider"
+            required
+          />
+        </Field>
+
+        {/* 8. Observação opcional */}
+        <Field label="Observação (opcional)">
+          <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={3} maxLength={500} placeholder="Algo relevante sobre essa jornada..." />
+        </Field>
+
+        {/* 9. Foto opcional */}
+        <Field label="Foto (opcional)" hint="Você pode anexar uma foto do hodômetro ou comprovante. Salvar sem foto também é permitido.">
+          <input
+            ref={fotoInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => onPickFoto(e.target.files?.[0] ?? null)}
+          />
+          {!fotoPreview ? (
+            <Button type="button" variant="outline" onClick={() => fotoInputRef.current?.click()} className="w-full">
+              <Camera className="mr-2 h-4 w-4" /> Adicionar foto
+            </Button>
+          ) : (
+            <div className="relative overflow-hidden rounded-lg border border-border">
+              <img src={fotoPreview} alt="Pré-visualização" className="max-h-64 w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => onPickFoto(null)}
+                className="absolute right-2 top-2 rounded-full bg-background/90 p-1 text-foreground shadow hover:bg-background"
+                aria-label="Remover foto"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </Field>
+
+        <Button type="submit" className="h-12 w-full text-base font-semibold" size="lg" disabled={submitting || kmInvalido}>
+          {submitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>) : "Salvar registro"}
         </Button>
       </form>
     </div>
   );
 };
+
+const Field = ({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) => (
+  <div className="space-y-1.5">
+    <Label className="text-sm font-medium">
+      {label}
+      {required && <span className="ml-0.5 text-destructive">*</span>}
+    </Label>
+    {children}
+    {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+  </div>
+);
 
 export default MotoristaNovoRegistro;
