@@ -34,8 +34,8 @@ export const AppShell = ({ children, nav, title }: { children: ReactNode; nav: N
             <Link to="/" className="flex items-center gap-2">
               <Logo className="h-8 w-8" />
               <div className="leading-tight">
-                <span className="block text-sm font-bold">ASERP</span>
-                <span className="block text-[11px] text-muted-foreground">{title}</span>
+                <span className="block text-sm font-bold">Controle de BDT</span>
+                <span className="block text-[11px] text-muted-foreground">ASERP · {title}</span>
               </div>
             </Link>
           </div>

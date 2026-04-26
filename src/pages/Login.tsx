@@ -23,7 +23,7 @@ const Login = () => {
   }, [location.state]);
 
   useEffect(() => {
-    document.title = "Entrar | Registro de Motoristas";
+    document.title = "Entrar | Controle de BDT";
   }, []);
 
   useEffect(() => {
@@ -68,8 +68,9 @@ const Login = () => {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <Logo className="mb-3 h-16 w-16" />
-          <h1 className="text-2xl font-bold">ASERP</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Registro digital de motoristas</p>
+          <h1 className="text-2xl font-bold">Controle de BDT</h1>
+          <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">ASERP</p>
+          <p className="mt-1 text-sm text-muted-foreground">Boletim Diário de Transporte</p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -91,7 +92,7 @@ const Login = () => {
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Novos motoristas podem se cadastrar. O acesso de administrador é controlado separadamente.
+          Novos motoristas precisam ser liberados pelo administrador antes de acessar o sistema.
         </p>
       </div>
     </div>
@@ -100,9 +101,7 @@ const Login = () => {
 
 const mapAuthError = (message: string) => {
   if (message === "Invalid login credentials") return "E-mail ou senha inválidos.";
-  if (/Password/i.test(message) && /weak|short|length|characters/i.test(message)) {
-    return "Senha fraca. Use pelo menos 8 caracteres, com letras maiúsculas, minúsculas, números e símbolo.";
-  }
+  if (/Email not confirmed/i.test(message)) return "Confirme seu e-mail antes de entrar.";
   return "Não foi possível entrar. Verifique seus dados e tente novamente.";
 };
 
