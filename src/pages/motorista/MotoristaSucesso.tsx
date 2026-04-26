@@ -11,9 +11,9 @@ const MotoristaSucesso = () => {
         <CheckCircle2 className="h-9 w-9" />
       </div>
       <div>
-        <h1 className="text-2xl font-bold">Registro salvo!</h1>
+        <h1 className="text-2xl font-bold">Registro feito!</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Seu registro foi enviado e está aguardando revisão do administrador.
+          Seu Boletim Diário de Transporte foi salvo. Você pode editá-lo no histórico por até 24 horas.
         </p>
       </div>
       <div className="grid gap-2">

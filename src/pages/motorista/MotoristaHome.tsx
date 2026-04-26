@@ -61,7 +61,8 @@ const MotoristaHome = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Olá, {nome}</h1>
-        <p className="text-sm text-muted-foreground">Registre suas saídas e voltas com poucos toques.</p>
+        <p className="text-xs text-muted-foreground">{user?.email}</p>
+        <p className="mt-1 text-sm text-muted-foreground">Registre seu Boletim Diário de Transporte com poucos toques.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -109,7 +110,7 @@ const MotoristaHome = () => {
           >
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-medium">{formatDate(ultimo.data_referencia)}</span>
-              <StatusBadge status={ultimo.status} />
+              <StatusBadge status={ultimo.status} viewer="motorista" />
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div><span className="text-muted-foreground">Posto:</span> {ultimo.postos?.nome ?? "—"}</div>
