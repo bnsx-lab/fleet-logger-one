@@ -7,7 +7,8 @@ import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, Lock } from "lucide-react";
+import { podeMotoristaEditar } from "@/lib/registros";
 
 type Row = {
   id: string;
@@ -18,6 +19,7 @@ type Row = {
   km_volta: number;
   km_rodados: number;
   status: RegistroStatus;
+  created_at: string;
   postos: { nome: string } | null;
   veiculos: { placa: string } | null;
 };
@@ -27,7 +29,7 @@ const MotoristaHistorico = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { document.title = "Meu histórico"; }, []);
+  useEffect(() => { document.title = "Meu histórico | Controle de BDT"; }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -35,7 +37,7 @@ const MotoristaHistorico = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("registros")
-        .select("id, data_referencia, entrada_at, saida_at, km_saida, km_volta, km_rodados, status, postos(nome), veiculos(placa)")
+        .select("id, data_referencia, entrada_at, saida_at, km_saida, km_volta, km_rodados, status, created_at, postos(nome), veiculos(placa)")
         .eq("profile_id", user.id)
         .order("data_referencia", { ascending: false })
         .order("created_at", { ascending: false })
@@ -66,21 +68,35 @@ const MotoristaHistorico = () => {
         <>
           {/* Mobile cards */}
           <div className="space-y-2 md:hidden">
-            {rows.map((r) => (
-              <div key={r.id} className="rounded-xl border border-border bg-card p-3">
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="text-sm font-semibold">{formatDate(r.data_referencia)}</span>
-                  <StatusBadge status={r.status} />
+            {rows.map((r) => {
+              const editavel = podeMotoristaEditar(r.created_at);
+              return (
+                <div key={r.id} className="rounded-xl border border-border bg-card p-3">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-sm font-semibold">{formatDate(r.data_referencia)}</span>
+                    <StatusBadge status={r.status} viewer="motorista" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 text-xs">
+                    <div><span className="text-muted-foreground">Posto:</span> {r.postos?.nome ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Placa:</span> {r.veiculos?.placa ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Entrada:</span> {formatDateTime(r.entrada_at)}</div>
+                    <div><span className="text-muted-foreground">Saída:</span> {formatDateTime(r.saida_at)}</div>
+                    <div className="col-span-2"><span className="text-muted-foreground">Km:</span> {formatNumber(r.km_saida)} → {formatNumber(r.km_volta)} = <b>{formatNumber(r.km_rodados)}</b></div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-end">
+                    {editavel ? (
+                      <Button asChild size="sm" variant="outline">
+                        <Link to={`/app/registros/${r.id}/editar`}><Pencil className="mr-1 h-3.5 w-3.5" /> Editar</Link>
+                      </Button>
+                    ) : (
+                      <span className="inline-flex items-center text-xs text-muted-foreground">
+                        <Lock className="mr-1 h-3 w-3" /> Edição disponível por até 24h após o envio.
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-1 text-xs">
-                  <div><span className="text-muted-foreground">Posto:</span> {r.postos?.nome ?? "—"}</div>
-                  <div><span className="text-muted-foreground">Placa:</span> {r.veiculos?.placa ?? "—"}</div>
-                  <div><span className="text-muted-foreground">Entrada:</span> {formatDateTime(r.entrada_at)}</div>
-                  <div><span className="text-muted-foreground">Saída:</span> {formatDateTime(r.saida_at)}</div>
-                  <div className="col-span-2"><span className="text-muted-foreground">Km:</span> {formatNumber(r.km_saida)} → {formatNumber(r.km_volta)} = <b>{formatNumber(r.km_rodados)}</b></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Desktop table */}
@@ -97,22 +113,37 @@ const MotoristaHistorico = () => {
                   <th className="px-4 py-2">Km volta</th>
                   <th className="px-4 py-2">Km rodados</th>
                   <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-border">
-                    <td className="px-4 py-2 whitespace-nowrap">{formatDate(r.data_referencia)}</td>
-                    <td className="px-4 py-2">{r.postos?.nome ?? "—"}</td>
-                    <td className="px-4 py-2">{r.veiculos?.placa ?? "—"}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{formatDateTime(r.entrada_at)}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{formatDateTime(r.saida_at)}</td>
-                    <td className="px-4 py-2">{formatNumber(r.km_saida)}</td>
-                    <td className="px-4 py-2">{formatNumber(r.km_volta)}</td>
-                    <td className="px-4 py-2 font-medium">{formatNumber(r.km_rodados)}</td>
-                    <td className="px-4 py-2"><StatusBadge status={r.status} /></td>
-                  </tr>
-                ))}
+                {rows.map((r) => {
+                  const editavel = podeMotoristaEditar(r.created_at);
+                  return (
+                    <tr key={r.id} className="border-t border-border">
+                      <td className="px-4 py-2 whitespace-nowrap">{formatDate(r.data_referencia)}</td>
+                      <td className="px-4 py-2">{r.postos?.nome ?? "—"}</td>
+                      <td className="px-4 py-2">{r.veiculos?.placa ?? "—"}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{formatDateTime(r.entrada_at)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{formatDateTime(r.saida_at)}</td>
+                      <td className="px-4 py-2">{formatNumber(r.km_saida)}</td>
+                      <td className="px-4 py-2">{formatNumber(r.km_volta)}</td>
+                      <td className="px-4 py-2 font-medium">{formatNumber(r.km_rodados)}</td>
+                      <td className="px-4 py-2"><StatusBadge status={r.status} viewer="motorista" /></td>
+                      <td className="px-4 py-2 text-right">
+                        {editavel ? (
+                          <Button asChild size="sm" variant="outline">
+                            <Link to={`/app/registros/${r.id}/editar`}><Pencil className="mr-1 h-3.5 w-3.5" /> Editar</Link>
+                          </Button>
+                        ) : (
+                          <span className="inline-flex items-center text-xs text-muted-foreground">
+                            <Lock className="mr-1 h-3 w-3" /> 24h
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
