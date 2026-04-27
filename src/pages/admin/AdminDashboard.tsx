@@ -12,8 +12,7 @@ type Recent = {
   km_rodados: number;
   status: RegistroStatus;
   motoristas: { nome_exibicao: string } | null;
-  postos: { nome: string } | null;
-  empresas: { nome: string } | null;
+  veiculos: { placa: string } | null;
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -34,7 +33,7 @@ const AdminDashboard = () => {
       supabase.from("registros").select("id", { count: "exact", head: true }).eq("status", "corrigido"),
       supabase
         .from("registros")
-        .select("id, data_referencia, km_rodados, status, motoristas(nome_exibicao), postos(nome), empresas(nome)")
+        .select("id, data_referencia, km_rodados, status, motoristas(nome_exibicao), veiculos(placa)")
         .order("created_at", { ascending: false })
         .limit(8),
     ]);
@@ -96,9 +95,8 @@ const AdminDashboard = () => {
                 <tr>
                   <th className="px-4 py-2">Data</th>
                   <th className="px-4 py-2">Motorista</th>
-                  <th className="px-4 py-2">Empresa</th>
-                  <th className="px-4 py-2">Posto</th>
-                  <th className="px-4 py-2">Km</th>
+                  <th className="px-4 py-2">Placa</th>
+                  <th className="px-4 py-2">KM rodados</th>
                   <th className="px-4 py-2">Status</th>
                 </tr>
               </thead>
@@ -111,8 +109,7 @@ const AdminDashboard = () => {
                         {r.motoristas?.nome_exibicao ?? "—"}
                       </Link>
                     </td>
-                    <td className="px-4 py-2">{r.empresas?.nome ?? "—"}</td>
-                    <td className="px-4 py-2">{r.postos?.nome ?? "—"}</td>
+                    <td className="px-4 py-2">{r.veiculos?.placa ?? "—"}</td>
                     <td className="px-4 py-2">{formatNumber(r.km_rodados)}</td>
                     <td className="px-4 py-2"><StatusBadge status={r.status} /></td>
                   </tr>

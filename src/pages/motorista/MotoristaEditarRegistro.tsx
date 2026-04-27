@@ -202,17 +202,11 @@ const MotoristaEditarRegistro = () => {
           <Field label="Hora de saída" required><Input type="time" value={horaSaida} onChange={(e) => setHoraSaida(e.target.value)} required /></Field>
         </div>
 
-        <Field label="Posto" required>
-          <select
-            value={postoId}
-            onChange={(e) => setPostoId(e.target.value)}
-            className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            required
-          >
-            <option value="">Selecione...</option>
-            {postos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
-          </select>
-        </Field>
+        <div className="rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          Empresa: <span className="font-semibold text-foreground">ASERP</span>
+          <span className="mx-2">·</span>
+          Posto: <span className="font-semibold text-foreground">SMSUB</span>
+        </div>
 
         <Field label="Placa do veículo" required>
           <Input
