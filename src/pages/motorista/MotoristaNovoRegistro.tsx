@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Camera, Loader2, X } from "lucide-react";
 import {
   EMPRESA_PADRAO_ID,
+  POSTO_PADRAO_ID,
   ensureVeiculoByPlaca,
   combineDateTime,
   resolveSaidaAt,
@@ -18,7 +19,6 @@ import {
   uploadFotoRegistro,
 } from "@/lib/registros";
 
-type Posto = { id: string; nome: string };
 type MotoristaCtx = { id: string; empresa_id: string; posto_principal_id: string | null };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -32,17 +32,16 @@ const MotoristaNovoRegistro = () => {
   const navigate = useNavigate();
 
   const [motorista, setMotorista] = useState<MotoristaCtx | null>(null);
-  const [postos, setPostos] = useState<Posto[]>([]);
   const [loadingCtx, setLoadingCtx] = useState(true);
 
-  // Ordem dos campos pedida pelo usuário:
-  // data → km inicial → km final → entrada → saída → posto → placa → observação → foto
+  // Ordem dos campos:
+  // data → km inicial → km final → entrada → saída → placa → observação → foto
+  // Posto é fixo (SMSUB) e exibido de forma discreta.
   const [dataRef, setDataRef] = useState(todayISO());
   const [kmSaida, setKmSaida] = useState("");
   const [kmVolta, setKmVolta] = useState("");
   const [horaEntrada, setHoraEntrada] = useState(nowHHMM());
   const [horaSaida, setHoraSaida] = useState("");
-  const [postoId, setPostoId] = useState("");
   const [placa, setPlaca] = useState("");
   const [observacao, setObservacao] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
@@ -56,18 +55,12 @@ const MotoristaNovoRegistro = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [m, p] = await Promise.all([
-        supabase
-          .from("motoristas")
-          .select("id, empresa_id, posto_principal_id")
-          .eq("profile_id", user.id)
-          .maybeSingle(),
-        supabase.from("postos").select("id, nome").eq("status", "ativo").order("nome"),
-      ]);
-      const mot = (m.data as any) ?? null;
-      setMotorista(mot);
-      setPostos((p.data as any) ?? []);
-      if (mot?.posto_principal_id) setPostoId(mot.posto_principal_id);
+      const { data } = await supabase
+        .from("motoristas")
+        .select("id, empresa_id, posto_principal_id")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+      setMotorista((data as any) ?? null);
       setLoadingCtx(false);
     })();
   }, [user]);
@@ -108,7 +101,6 @@ const MotoristaNovoRegistro = () => {
     if (kmVolta === "" || !Number.isFinite(b) || b < 0) return toast.error("Informe um KM final válido (não pode ser negativo).");
     if (b < a) return toast.error("O KM final não pode ser menor que o KM inicial.");
     if (!horaEntrada || !horaSaida) return toast.error("Informe hora de entrada e hora de saída.");
-    if (!postoId) return toast.error("Selecione o posto.");
     if (!isPlacaValida(placa)) return toast.error("Informe uma placa válida (ex.: ABC1234 ou ABC1D23).");
 
     setSubmitting(true);
@@ -130,7 +122,7 @@ const MotoristaNovoRegistro = () => {
         profile_id: user.id,
         motorista_id: motorista.id,
         empresa_id: motorista.empresa_id ?? EMPRESA_PADRAO_ID,
-        posto_id: postoId,
+        posto_id: motorista.posto_principal_id ?? POSTO_PADRAO_ID,
         veiculo_id: veiculoId,
         data_referencia: dataRef,
         entrada_at: entradaAt,
@@ -244,18 +236,12 @@ const MotoristaNovoRegistro = () => {
           </Field>
         </div>
 
-        {/* 6. Posto */}
-        <Field label="Posto" required>
-          <select
-            value={postoId}
-            onChange={(e) => setPostoId(e.target.value)}
-            className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            required
-          >
-            <option value="">Selecione...</option>
-            {postos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
-          </select>
-        </Field>
+        {/* Posto fixo (ASERP · SMSUB) — discreto */}
+        <div className="rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          Empresa: <span className="font-semibold text-foreground">ASERP</span>
+          <span className="mx-2">·</span>
+          Posto: <span className="font-semibold text-foreground">SMSUB</span>
+        </div>
 
         {/* 7. Placa */}
         <Field label="Placa do veículo" required hint="Aceita placa antiga (ABC1234) ou Mercosul (ABC1D23). Pode digitar com ou sem hífen.">
