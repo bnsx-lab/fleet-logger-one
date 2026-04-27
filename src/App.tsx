@@ -18,10 +18,9 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRegistros from "./pages/admin/AdminRegistros";
 import AdminRegistroDetalhe from "./pages/admin/AdminRegistroDetalhe";
 import AdminMotoristas from "./pages/admin/AdminMotoristas";
-import AdminPostos from "./pages/admin/AdminPostos";
 import AdminVeiculos from "./pages/admin/AdminVeiculos";
-import AdminEmpresas from "./pages/admin/AdminEmpresas";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import { Navigate } from "react-router-dom";
 
 import MotoristaLayout from "./pages/motorista/MotoristaLayout";
 import MotoristaHome from "./pages/motorista/MotoristaHome";
@@ -67,10 +66,12 @@ const App = () => (
               <Route path="registros" element={<AdminRegistros />} />
               <Route path="registros/:id" element={<AdminRegistroDetalhe />} />
               <Route path="motoristas" element={<AdminMotoristas />} />
-              <Route path="postos" element={<AdminPostos />} />
               <Route path="veiculos" element={<AdminVeiculos />} />
-              <Route path="empresas" element={<AdminEmpresas />} />
               <Route path="usuarios" element={<AdminUsuarios />} />
+              {/* Rotas legadas: redireciona para o painel para evitar telas vazias */}
+              <Route path="postos" element={<Navigate to="/admin" replace />} />
+              <Route path="empresas" element={<Navigate to="/admin" replace />} />
+              <Route path="mais" element={<Navigate to="/admin" replace />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

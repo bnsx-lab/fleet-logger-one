@@ -6,9 +6,7 @@ const nav = [
   { to: "/admin/registros", label: "Registros" },
   { to: "/admin/motoristas", label: "Motoristas" },
   { to: "/admin/usuarios", label: "Usuários" },
-  { to: "/admin/postos", label: "Postos" },
   { to: "/admin/veiculos", label: "Veículos" },
-  { to: "/admin/empresas", label: "Empresas" },
 ];
 
 export const AdminLayout = () => (
