@@ -37,10 +37,8 @@ const AdminRegistros = () => {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // filtros
+  // filtros (empresa/posto removidos: sistema opera apenas com ASERP/SMSUB)
   const [motoristaId, setMotoristaId] = useState("");
-  const [empresaId, setEmpresaId] = useState("");
-  const [postoId, setPostoId] = useState("");
   const [veiculoId, setVeiculoId] = useState("");
   const [status, setStatus] = useState<string>("");
   const [from, setFrom] = useState("");
@@ -48,23 +46,17 @@ const AdminRegistros = () => {
 
   // listas
   const [motoristas, setMotoristas] = useState<OptList>([]);
-  const [empresas, setEmpresas] = useState<OptList>([]);
-  const [postos, setPostos] = useState<OptList>([]);
   const [veiculos, setVeiculos] = useState<OptList>([]);
 
   useEffect(() => { document.title = "Registros | Admin"; }, []);
 
   useEffect(() => {
     (async () => {
-      const [m, e, p, v] = await Promise.all([
+      const [m, v] = await Promise.all([
         supabase.from("motoristas").select("id, nome_exibicao").order("nome_exibicao"),
-        supabase.from("empresas").select("id, nome").order("nome"),
-        supabase.from("postos").select("id, nome").order("nome"),
         supabase.from("veiculos").select("id, placa").order("placa"),
       ]);
       setMotoristas((m.data ?? []).map((x: any) => ({ id: x.id, label: x.nome_exibicao })));
-      setEmpresas((e.data ?? []).map((x: any) => ({ id: x.id, label: x.nome })));
-      setPostos((p.data ?? []).map((x: any) => ({ id: x.id, label: x.nome })));
       setVeiculos((v.data ?? []).map((x: any) => ({ id: x.id, label: x.placa })));
     })();
   }, []);
@@ -80,8 +72,6 @@ const AdminRegistros = () => {
       .order("created_at", { ascending: false });
 
     if (motoristaId) q = q.eq("motorista_id", motoristaId);
-    if (empresaId) q = q.eq("empresa_id", empresaId);
-    if (postoId) q = q.eq("posto_id", postoId);
     if (veiculoId) q = q.eq("veiculo_id", veiculoId);
     if (status) q = q.eq("status", status as RegistroStatus);
     if (from) q = q.gte("data_referencia", from);
@@ -102,7 +92,7 @@ const AdminRegistros = () => {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, motoristaId, empresaId, postoId, veiculoId, status, from, to]);
+  }, [page, motoristaId, veiculoId, status, from, to]);
 
   // Realtime: novos registros do motorista chegam automaticamente
   useEffect(() => {
@@ -114,7 +104,7 @@ const AdminRegistros = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, motoristaId, empresaId, postoId, veiculoId, status, from, to]);
+  }, [page, motoristaId, veiculoId, status, from, to]);
 
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
@@ -156,7 +146,7 @@ const AdminRegistros = () => {
   };
 
   const clearFilters = () => {
-    setMotoristaId(""); setEmpresaId(""); setPostoId(""); setVeiculoId(""); setStatus(""); setFrom(""); setTo("");
+    setMotoristaId(""); setVeiculoId(""); setStatus(""); setFrom(""); setTo("");
     setPage(0);
   };
 
@@ -183,8 +173,6 @@ const AdminRegistros = () => {
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Select label="Motorista" value={motoristaId} onChange={setMotoristaId} options={motoristas} />
-          <Select label="Empresa" value={empresaId} onChange={setEmpresaId} options={empresas} />
-          <Select label="Posto" value={postoId} onChange={setPostoId} options={postos} />
           <Select label="Placa" value={veiculoId} onChange={setVeiculoId} options={veiculos} />
           <Select
             label="Status"
@@ -199,11 +187,11 @@ const AdminRegistros = () => {
             ]}
           />
           <div>
-            <Label className="text-xs">De</Label>
+            <Label className="text-xs">Data inicial</Label>
             <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0); }} />
           </div>
           <div>
-            <Label className="text-xs">Até</Label>
+            <Label className="text-xs">Data final</Label>
             <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0); }} />
           </div>
           <div className="flex items-end">
@@ -232,8 +220,6 @@ const AdminRegistros = () => {
                 </div>
                 <p className="truncate text-sm font-medium text-primary">{r.motoristas?.nome_exibicao ?? "—"}</p>
                 <div className="mt-1 grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                  <div><span>Empresa:</span> <span className="text-foreground">{r.empresas?.nome ?? "—"}</span></div>
-                  <div><span>Posto:</span> <span className="text-foreground">{r.postos?.nome ?? "—"}</span></div>
                   <div><span>Placa:</span> <span className="text-foreground">{r.veiculos?.placa ?? "—"}</span></div>
                   <div><span>Km rodados:</span> <span className="font-semibold text-foreground">{formatNumber(r.km_rodados)}</span></div>
                 </div>
@@ -248,10 +234,8 @@ const AdminRegistros = () => {
                 <tr>
                   <th className="px-4 py-2">Data</th>
                   <th className="px-4 py-2">Motorista</th>
-                  <th className="px-4 py-2">Empresa</th>
-                  <th className="px-4 py-2">Posto</th>
                   <th className="px-4 py-2">Placa</th>
-                  <th className="px-4 py-2">Km</th>
+                  <th className="px-4 py-2">KM rodados</th>
                   <th className="px-4 py-2">Status</th>
                 </tr>
               </thead>
@@ -264,8 +248,6 @@ const AdminRegistros = () => {
                         {r.motoristas?.nome_exibicao ?? "—"}
                       </Link>
                     </td>
-                    <td className="px-4 py-2">{r.empresas?.nome ?? "—"}</td>
-                    <td className="px-4 py-2">{r.postos?.nome ?? "—"}</td>
                     <td className="px-4 py-2">{r.veiculos?.placa ?? "—"}</td>
                     <td className="px-4 py-2">{formatNumber(r.km_rodados)}</td>
                     <td className="px-4 py-2"><StatusBadge status={r.status} /></td>
