@@ -57,8 +57,11 @@ const App = () => (
             >
               <Route index element={<MotoristaHome />} />
               <Route path="novo" element={<MotoristaNovoRegistro />} />
+              <Route path="em-andamento" element={<MotoristaEmAndamento />} />
+              <Route path="rascunhos" element={<MotoristaRascunhos />} />
               <Route path="sucesso" element={<MotoristaSucesso />} />
               <Route path="historico" element={<MotoristaHistorico />} />
+              <Route path="registros/:id/finalizar" element={<MotoristaFinalizarRegistro />} />
               <Route path="registros/:id/editar" element={<MotoristaEditarRegistro />} />
             </Route>
 
@@ -70,10 +73,11 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="registros" element={<AdminRegistros />} />
               <Route path="registros/:id" element={<AdminRegistroDetalhe />} />
+              <Route path="imagens" element={<AdminImagens />} />
+              <Route path="totalizador" element={<AdminTotalizador />} />
               <Route path="motoristas" element={<AdminMotoristas />} />
               <Route path="veiculos" element={<AdminVeiculos />} />
               <Route path="usuarios" element={<AdminUsuarios />} />
-              {/* Rotas legadas: redireciona para o painel para evitar telas vazias */}
               <Route path="postos" element={<Navigate to="/admin" replace />} />
               <Route path="empresas" element={<Navigate to="/admin" replace />} />
               <Route path="mais" element={<Navigate to="/admin" replace />} />
