@@ -10,7 +10,8 @@ import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
-import { fotoPublicUrl } from "@/lib/registros";
+import { fotoPublicUrl, listarFotosDoRegistro, type FotoRegistro } from "@/lib/registros";
+import { useState as useStateFotos } from "react";
 
 type Registro = {
   id: string;
