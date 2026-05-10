@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 
 const nav = [
   { to: "/app", label: "Início" },
+  { to: "/app/em-andamento", label: "Em andamento" },
+  { to: "/app/rascunhos", label: "Rascunhos" },
   { to: "/app/historico", label: "Histórico" },
 ];
 
