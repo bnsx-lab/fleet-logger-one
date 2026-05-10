@@ -261,22 +261,58 @@ export type Database = {
         }
         Relationships: []
       }
+      registro_fotos: {
+        Row: {
+          created_at: string
+          foto_path: string
+          id: string
+          profile_id: string
+          registro_id: string
+          tipo: string | null
+        }
+        Insert: {
+          created_at?: string
+          foto_path: string
+          id?: string
+          profile_id: string
+          registro_id: string
+          tipo?: string | null
+        }
+        Update: {
+          created_at?: string
+          foto_path?: string
+          id?: string
+          profile_id?: string
+          registro_id?: string
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registro_fotos_registro_id_fkey"
+            columns: ["registro_id"]
+            isOneToOne: false
+            referencedRelation: "registros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registros: {
         Row: {
           created_at: string
           data_referencia: string
           empresa_id: string
           entrada_at: string
+          enviado_at: string | null
           foto_path: string | null
           id: string
           km_rodados: number
           km_saida: number
-          km_volta: number
+          km_volta: number | null
           motorista_id: string
           observacao: string | null
           posto_id: string
           profile_id: string
-          saida_at: string
+          saida_at: string | null
           status: Database["public"]["Enums"]["registro_status"]
           updated_at: string
           veiculo_id: string
@@ -286,16 +322,17 @@ export type Database = {
           data_referencia: string
           empresa_id: string
           entrada_at: string
+          enviado_at?: string | null
           foto_path?: string | null
           id?: string
           km_rodados?: number
           km_saida: number
-          km_volta: number
+          km_volta?: number | null
           motorista_id: string
           observacao?: string | null
           posto_id: string
           profile_id: string
-          saida_at: string
+          saida_at?: string | null
           status?: Database["public"]["Enums"]["registro_status"]
           updated_at?: string
           veiculo_id: string
@@ -305,16 +342,17 @@ export type Database = {
           data_referencia?: string
           empresa_id?: string
           entrada_at?: string
+          enviado_at?: string | null
           foto_path?: string | null
           id?: string
           km_rodados?: number
           km_saida?: number
-          km_volta?: number
+          km_volta?: number | null
           motorista_id?: string
           observacao?: string | null
           posto_id?: string
           profile_id?: string
-          saida_at?: string
+          saida_at?: string | null
           status?: Database["public"]["Enums"]["registro_status"]
           updated_at?: string
           veiculo_id?: string
@@ -439,6 +477,9 @@ export type Database = {
         | "aprovado"
         | "corrigido"
         | "cancelado"
+        | "rascunho"
+        | "em_andamento"
+        | "finalizado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -574,6 +615,9 @@ export const Constants = {
         "aprovado",
         "corrigido",
         "cancelado",
+        "rascunho",
+        "em_andamento",
+        "finalizado",
       ],
     },
   },

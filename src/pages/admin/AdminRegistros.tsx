@@ -179,6 +179,9 @@ const AdminRegistros = () => {
             value={status}
             onChange={setStatus}
             options={[
+              { id: "rascunho", label: "Rascunho" },
+              { id: "em_andamento", label: "Em andamento" },
+              { id: "finalizado", label: "Finalizado" },
               { id: "pendente", label: "Pendente" },
               { id: "revisado", label: "Revisado" },
               { id: "aprovado", label: "Aprovado" },

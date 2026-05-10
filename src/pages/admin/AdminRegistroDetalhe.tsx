@@ -43,6 +43,9 @@ type Audit = {
 
 // Transições permitidas
 const transitions: Record<RegistroStatus, RegistroStatus[]> = {
+  rascunho: ["finalizado", "cancelado"],
+  em_andamento: ["finalizado", "cancelado"],
+  finalizado: ["revisado", "corrigido", "cancelado"],
   pendente: ["revisado", "cancelado"],
   revisado: ["aprovado", "corrigido"],
   aprovado: [],
