@@ -20,6 +20,8 @@ import AdminRegistroDetalhe from "./pages/admin/AdminRegistroDetalhe";
 import AdminMotoristas from "./pages/admin/AdminMotoristas";
 import AdminVeiculos from "./pages/admin/AdminVeiculos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminImagens from "./pages/admin/AdminImagens";
+import AdminTotalizador from "./pages/admin/AdminTotalizador";
 import { Navigate } from "react-router-dom";
 
 import MotoristaLayout from "./pages/motorista/MotoristaLayout";
@@ -28,6 +30,9 @@ import MotoristaHistorico from "./pages/motorista/MotoristaHistorico";
 import MotoristaNovoRegistro from "./pages/motorista/MotoristaNovoRegistro";
 import MotoristaEditarRegistro from "./pages/motorista/MotoristaEditarRegistro";
 import MotoristaSucesso from "./pages/motorista/MotoristaSucesso";
+import MotoristaEmAndamento from "./pages/motorista/MotoristaEmAndamento";
+import MotoristaFinalizarRegistro from "./pages/motorista/MotoristaFinalizarRegistro";
+import MotoristaRascunhos from "./pages/motorista/MotoristaRascunhos";
 
 const queryClient = new QueryClient();
 
