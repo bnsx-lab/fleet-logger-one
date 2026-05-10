@@ -4,6 +4,8 @@ import { AppShell } from "@/components/AppShell";
 const nav = [
   { to: "/admin", label: "Dashboard" },
   { to: "/admin/registros", label: "Registros" },
+  { to: "/admin/imagens", label: "Imagens" },
+  { to: "/admin/totalizador", label: "Totalizador" },
   { to: "/admin/motoristas", label: "Motoristas" },
   { to: "/admin/usuarios", label: "Usuários" },
   { to: "/admin/veiculos", label: "Veículos" },
